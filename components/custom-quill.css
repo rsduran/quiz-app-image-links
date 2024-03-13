@@ -1,0 +1,19 @@
+/* Custom styles for Quill editor in dark mode */
+.quill-dark-mode .ql-toolbar .ql-picker-label,
+.quill-dark-mode .ql-toolbar button {
+  color: #e0e0e0; /* Whiter color for icons and labels */
+}
+
+.quill-dark-mode .ql-toolbar .ql-picker-label:hover,
+.quill-dark-mode .ql-toolbar button:hover {
+  color: #ffffff; /* Even whiter on hover for better visibility */
+}
+
+/* Custom placeholder color based on mode */
+.ql-editor.ql-blank::before {
+  color: #888; /* Default placeholder color */
+}
+
+.quill-dark-mode .ql-editor.ql-blank::before {
+  color: #ccc; /* Lighter placeholder color for dark mode */
+}
