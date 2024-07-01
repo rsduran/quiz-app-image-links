@@ -193,7 +193,7 @@ export default function HomePage() {
                     First, clone the repository and navigate to the project directory:<br />
                     <Center my={2}>
                       <pre>
-                        <Code whiteSpace="pre-wrap">git clone https://github.com/MokBomi/athena-cli.git</Code>
+                        <Code whiteSpace="pre-wrap">git clone https://github.com/rsduran/athena-cli.git</Code>
                       </pre>
                     </Center>
                     <Center mt={2}>
@@ -265,15 +265,15 @@ export default function HomePage() {
             <Text fontSize="sm" textAlign="center" color={useColorModeValue('gray.600', 'gray.200')}>
               Built by{' '}
               <ChakraLink
-                href="https://github.com/MokBomi"
+                href="https://github.com/rsduran"
                 isExternal
                 textDecoration="underline"
                 color={useColorModeValue('black', 'white')}
               >
-                MokBomi
+                rsduran
               </ChakraLink>. The source code is available on{' '}
               <ChakraLink
-                href="https://github.com/MokBomi/athena-cli"
+                href="https://github.com/rsduran/athena-cli"
                 isExternal
                 textDecoration="underline"
                 color={useColorModeValue('black', 'white')}

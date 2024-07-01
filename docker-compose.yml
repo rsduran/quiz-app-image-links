@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: quiz-app-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: quiz-app-frontend
+    ports:
+      - "3000:3000"
+
+  db:
+    image: postgres:13
+    container_name: quiz-app-db
+    environment:
+      POSTGRES_USER: yourusername
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: quizapp
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
