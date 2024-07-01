@@ -12,8 +12,16 @@ RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Additional installations for specific packages
+RUN apt-get update && apt-get install -y git
 RUN pip install git+https://github.com/MIDORIBIN/langchain-gpt4free.git
 RUN pip install -U langchain-community
+
+# Set the PYTHONPATH environment variable to include the backend directory
+ENV PYTHONPATH "${PYTHONPATH}:/app/backend"
+
+# Ensure the instance directory exists and set correct permissions
+RUN mkdir -p /app/backend/instance
+RUN chmod -R 777 /app/backend/instance
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000

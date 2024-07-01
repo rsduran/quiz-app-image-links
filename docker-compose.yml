@@ -10,6 +10,10 @@ services:
       - "5000:5000"
     depends_on:
       - db
+    environment:
+      DATABASE_URL: "sqlite:///app/backend/instance/quizapp.db"
+    volumes:
+      - ./backend/instance:/app/backend/instance
 
   frontend:
     build:
