@@ -1,29 +1,18 @@
-version: '3'
-services:  
-  frontend:    
-    build:      
-      context: .      
-      dockerfile: frontend/Dockerfile.frontend    
-    ports:      
-      - "3000:3000"    
-    volumes:      
-      - ./frontend:/app    
-    networks:      
-    - app-network  
-    
-  backend:    
-    build:      
-      context: .      
-      dockerfile: backend/Dockerfile.backend    
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    ports:
+      - "5000:5000"
+  db:
+    image: postgres:13
     environment:
-      - PYTHONPATH=/app
-    ports:      
-      - "5000:5000"    
-    volumes:      
-      - ./backend:/app    
-    networks:      
-      - app-network
-
-networks:  
-  app-network:    
-    driver: bridge
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password

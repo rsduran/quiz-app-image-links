@@ -1,6 +1,6 @@
 # models.py
 
-from .db import db
+from db import db
 import uuid
 
 class QuizSet(db.Model):

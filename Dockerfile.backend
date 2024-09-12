@@ -1,30 +1,23 @@
-# Use an official Python runtime as a parent image
+# Use an official Python runtime (Python 3.11)
 FROM python:3.11-slim
+
+# Install git and set Python 3.11 as the default
+RUN apt-get update && apt-get install -y git \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy the backend code into the container
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r backend/requirements.txt
+# Install the backend dependencies and additional dependencies in one command
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install git+https://github.com/MIDORIBIN/langchain-gpt4free.git \
+    && pip install -U langchain-community
 
-# Additional installations for specific packages
-RUN apt-get update && apt-get install -y git
-RUN pip install git+https://github.com/MIDORIBIN/langchain-gpt4free.git
-RUN pip install -U langchain-community
-
-# Set the PYTHONPATH environment variable to include the backend directory
-ENV PYTHONPATH "${PYTHONPATH}:/app/backend"
-
-# Ensure the instance directory exists and set correct permissions
-RUN mkdir -p /app/backend/instance
-RUN chmod -R 777 /app/backend/instance
-
-# Make port 5000 available to the world outside this container
+# Expose port 5000 for the backend service
 EXPOSE 5000
 
-# Run backend service
-CMD ["python", "backend/main.py"]
+# Run the backend using python main.py from /app directory
+CMD ["python", "main.py"]
