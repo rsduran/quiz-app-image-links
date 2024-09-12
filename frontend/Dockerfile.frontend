@@ -10,7 +10,7 @@ COPY ./frontend/package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the frontend code into the container
+# Copy the rest of the frontend code
 COPY ./frontend .
 
 # Build the Next.js application

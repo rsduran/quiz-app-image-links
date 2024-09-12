@@ -1,6 +1,6 @@
 # main.py
 
-from backend.app_init import app
+from app_init import app  # Import directly
 
 if __name__ == "__main__":
     app.run(debug=True)
