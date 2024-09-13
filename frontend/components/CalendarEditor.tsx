@@ -45,7 +45,7 @@ const CalendarEditor = () => {
   }, [date]);
 
   const fetchEditorContent = () => {
-    fetch('http://localhost:5000/getEditorContent')
+    fetch('http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getEditorContent')
       .then(response => response.json())
       .then(data => {
         setEditorContent(data.content);
@@ -58,7 +58,7 @@ const CalendarEditor = () => {
     setEditorContent(content);
     localStorage.setItem('editorContent', content);
 
-    fetch('http://localhost:5000/saveEditorContent', {
+    fetch('http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/saveEditorContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
