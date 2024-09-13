@@ -48,7 +48,7 @@ const DynamicQuizTable = () => {
   // Fetch quiz sets data
   const fetchQuizSets = async () => {
     try {
-      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getQuizSets');
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getQuizSets`);
       if (!response.ok) throw new Error('Network response was not ok');
       
       const quizSetsData = await response.json();
@@ -92,7 +92,7 @@ const DynamicQuizTable = () => {
     // Fetch the initial lock state from the backend
     const fetchLockState = async () => {
       try {
-        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getLockState/global'); // Assuming 'global' as a key for global lock state
+        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getLockState/global`); // Assuming 'global' as a key for global lock state
         const data = await response.json();
         setIsLocked(data.lock_state);
       } catch (error) {
@@ -131,7 +131,7 @@ const DynamicQuizTable = () => {
 
   const toggleLock = async () => {
     try {
-        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/global', {
+        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/global`, {
             method: 'POST',
         });
         if (response.ok) {

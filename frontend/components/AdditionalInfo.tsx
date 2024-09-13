@@ -144,13 +144,13 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
           setFurtherExplanation(formatBotResponse(data.explanation));
           setFetchedExplanation(true);
         } else {
-          const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation', {
+          const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(questionDetails)
           });
           const newData = await newResponse.json();
-          await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation', {
+          await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })
@@ -172,14 +172,14 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     setLoadingReload(true);
     try {
       // Make a new request to the server for a fresh explanation
-      const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation', {
+      const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(questionDetails)
       });
       const newData = await newResponse.json();
       // Save the new explanation to the database
-      await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation', {
+      await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })

@@ -312,7 +312,7 @@ const QuizModePage = () => {
   };
 
   const handleToggleFavorites = (questionId: number) => {
-    fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/toggleFavorite', {
+    fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/toggleFavorite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId })
@@ -379,7 +379,7 @@ const QuizModePage = () => {
       await updateScore(questionId, decrement);
     }
   
-    await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/updateUserSelection', {
+    await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/updateUserSelection`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId, selected_option: selectedOption })
@@ -394,7 +394,7 @@ const QuizModePage = () => {
   };  
 
 const updateScore = async (questionId: number, scoreChange: number) => {
-  await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/updateScore', {
+  await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/updateScore`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId, increment: scoreChange, quiz_set_id: id })
