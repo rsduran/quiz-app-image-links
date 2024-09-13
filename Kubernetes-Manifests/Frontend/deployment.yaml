@@ -23,7 +23,7 @@ spec:
     spec: 
       containers:
       - name: frontend
-        image: rsduran/frontend:15  # Using DockerHub public repo
+        image: rsduran/frontend:17  # Using DockerHub public repo
         imagePullPolicy: Always
         env:
           - name: REACT_APP_BACKEND_URL
