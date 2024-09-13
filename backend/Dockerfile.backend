@@ -23,8 +23,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install git+https://github.com/MIDORIBIN/langchain-gpt4free.git
 RUN pip install -U langchain-community
 
+# Install Gunicorn
+RUN pip install gunicorn
+
 # Expose port 5000 for the backend service
 EXPOSE 5000
 
-# Run the backend, waiting for the PostgreSQL service to be ready
-CMD ["./wait-for-it.sh", "postgres-svc:5432", "-t", "30", "--", "python", "main.py"]
+# Run Gunicorn, waiting for PostgreSQL to be ready
+CMD ["./wait-for-it.sh", "postgres-svc:5432", "-t", "30", "--", "gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
