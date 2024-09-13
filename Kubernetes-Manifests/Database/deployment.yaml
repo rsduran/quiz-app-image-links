@@ -32,15 +32,15 @@ spec:
           - name: POSTGRES_DB
             value: quizdb  # Database name for your quiz app
         volumeMounts:
-          - name: postgres-volume-1
+          - name: postgres-volume
             mountPath: /var/lib/postgresql/data
           - name: postgres-init
             mountPath: /docker-entrypoint-initdb.d/init.sql
             subPath: init.sql  # Ensure init.sql is executed during initialization
       volumes:
-      - name: postgres-volume-1
+      - name: postgres-volume
         persistentVolumeClaim:
-          claimName: postgres-volume-claim-1
+          claimName: postgres-volume-claim
       - name: postgres-init
         configMap:
           name: postgres-init-sql  # Reference to the ConfigMap holding init.sql
