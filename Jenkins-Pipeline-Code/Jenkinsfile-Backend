@@ -17,7 +17,7 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app.git' // Updated to use GitHub credentials
+                git branch: 'main', credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app.git'
             }
         }
         stage('Sonarqube Analysis') {
