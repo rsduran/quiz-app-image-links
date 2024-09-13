@@ -526,3 +526,7 @@ def download_quiz_pdf(quiz_set_id):
     buffer.seek(0)
 
     return send_file(buffer, as_attachment=True, download_name=f"{quiz_set.title}.pdf", mimetype='application/pdf')
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
