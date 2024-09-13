@@ -37,7 +37,7 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
 
   const fetchDiscussionComments = async () => {
     try {
-      const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getDiscussionComments/${question_id}`);
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getDiscussionComments/${question_id}`);
       const data = await response.json();
       if (data.discussion_comments) {
         const commentPattern = /(.+?)said:(.+ago):(.+)/;
@@ -137,20 +137,20 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     localStorage.setItem(`loading-${question_id}`, 'true'); // Set loading state in local storage
     if (!fetchedExplanation) {
       try {
-        const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getFurtherExplanation/${question_id}`);
+        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation/${question_id}`);
         const data = await response.json();
         if (data.explanation) {
           localStorage.setItem(`furtherExplanation-${question_id}`, data.explanation);
           setFurtherExplanation(formatBotResponse(data.explanation));
           setFetchedExplanation(true);
         } else {
-          const newResponse = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getFurtherExplanation`, {
+          const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(questionDetails)
           });
           const newData = await newResponse.json();
-          await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/saveFurtherExplanation`, {
+          await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })
@@ -172,14 +172,14 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     setLoadingReload(true);
     try {
       // Make a new request to the server for a fresh explanation
-      const newResponse = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getFurtherExplanation`, {
+      const newResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(questionDetails)
       });
       const newData = await newResponse.json();
       // Save the new explanation to the database
-      await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/saveFurtherExplanation`, {
+      await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/saveFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })

@@ -94,7 +94,7 @@ const QuizModePage = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getQuestionsByQuizSet/${id}`);
+        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getQuestionsByQuizSet/${id}`);
         if (!response.ok) throw new Error('Network response was not ok');
         let data = await response.json();
 
@@ -152,7 +152,7 @@ const QuizModePage = () => {
     console.log("Confirming shuffle questions...");
     try {
       console.log("Before fetching shuffled questions");
-      const shuffledResponse = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/shuffleQuestions/${id}`, { method: 'POST' });
+      const shuffledResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/shuffleQuestions/${id}`, { method: 'POST' });
       if (!shuffledResponse.ok) throw new Error('Error shuffling questions');
       
       let shuffledQuestions = await shuffledResponse.json();
@@ -202,7 +202,7 @@ const QuizModePage = () => {
 
   const fetchUserSelections = async () => {
     try {
-      const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getUserSelections/${id}`);
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getUserSelections/${id}`);
       if (!response.ok) throw new Error('Network response was not ok');
       const selections = await response.json();
       setQuestions(prevQuestions => prevQuestions.map(q => ({
@@ -217,7 +217,7 @@ const QuizModePage = () => {
   const fetchQuestionsAndUpdateSelections = async () => {
     console.log("Fetching questions...");
     try {
-      const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getQuestionsByQuizSet/${id}`);
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getQuestionsByQuizSet/${id}`);
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       console.log("Fetched Questions Data:", data);
@@ -239,7 +239,7 @@ const QuizModePage = () => {
   };  
 
   const fetchEyeIconState = async () => {
-    const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getEyeIconState/${id}`);  // Use quiz set ID
+    const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getEyeIconState/${id}`);  // Use quiz set ID
     const data = await response.json();
     if (response.ok) {
       setEyeIcon(data.state ? 'open' : 'none');
@@ -279,7 +279,7 @@ const QuizModePage = () => {
 
   const fetchFavorites = async () => {
     try {
-      const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/getFavorites/${id}`);
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getFavorites/${id}`);
       if (!response.ok) throw new Error('Network response was not ok');
       const favoritedQuestions = await response.json();
       setFavorites(new Set(favoritedQuestions.map((q: { id: number }) => q.id)));
@@ -312,7 +312,7 @@ const QuizModePage = () => {
   };
 
   const handleToggleFavorites = (questionId: number) => {
-    fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/toggleFavorite`, {
+    fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/toggleFavorite`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId })
@@ -379,7 +379,7 @@ const QuizModePage = () => {
       await updateScore(questionId, decrement);
     }
   
-    await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/updateUserSelection`, {
+    await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/updateUserSelection`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId, selected_option: selectedOption })
@@ -394,7 +394,7 @@ const QuizModePage = () => {
   };  
 
 const updateScore = async (questionId: number, scoreChange: number) => {
-  await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/updateScore`, {
+  await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/updateScore`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question_id: questionId, increment: scoreChange, quiz_set_id: id })
@@ -468,7 +468,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
 
   const updateQuizSetStatus = async (status: string) => {
     try {
-      await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/updateQuizSetStatus/${id}`, {
+      await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/updateQuizSetStatus/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -480,7 +480,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
   
   const updateScoreInDatabase = (score: number) => {
     // Assuming you have an endpoint to update the score
-    fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/updateQuizSetScore/${id}`, {
+    fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/updateQuizSetScore/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score })
@@ -544,7 +544,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
   const handleReset = async () => {
     console.log("Initiating reset");
     try {
-      const response = await fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/resetQuestions/${id}`, {
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/resetQuestions/${id}`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error('Network response was not ok');
@@ -605,7 +605,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
   // Function to toggle Flip Card visibility and icon state
   const toggleFlipCardVisibility = () => {
     const newState = eyeIcon === 'open' ? 'none' : 'open';
-    fetch(`http://backend-service.three-tier.svc.cluster.local:5000/api/updateEyeIconState/${id}`, {  // Use quiz set ID
+    fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/updateEyeIconState/${id}`, {  // Use quiz set ID
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state: newState === 'open' })
