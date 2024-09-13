@@ -10,8 +10,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: yourdomain.com  # Replace with your domain
-      http:
+    - http:
         paths:
           - path: /api
             pathType: Prefix
@@ -19,7 +18,7 @@ spec:
               service:
                 name: backend
                 port:
-                  number: 5000  # Backend service port
+                  number: 5000
           - path: /
             pathType: Prefix
             backend:
