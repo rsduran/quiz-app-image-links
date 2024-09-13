@@ -48,19 +48,19 @@ const DynamicQuizTable = () => {
   // Fetch quiz sets data
   const fetchQuizSets = async () => {
     try {
-      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getQuizSets`);
+      const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/getQuizSets`);
       if (!response.ok) throw new Error('Network response was not ok');
       
       const quizSetsData = await response.json();
       const updatedQuizSets = await Promise.all(quizSetsData.map(async (quizSet: QuizSet) => {
-        const detailsResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getQuizSetDetails/${quizSet.id}`);
+        const detailsResponse = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/getQuizSetDetails/${quizSet.id}`);
         const details = await detailsResponse.json();
   
-        const scoreResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getQuizSetScore/${quizSet.id}`);
+        const scoreResponse = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/getQuizSetScore/${quizSet.id}`);
         const scoreData = await scoreResponse.json();
   
         // Fetch lock state
-        const lockStateResponse = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getLockState/${quizSet.id}`);
+        const lockStateResponse = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/getLockState/${quizSet.id}`);
         const lockStateData = await lockStateResponse.json();
   
         return {
@@ -92,7 +92,7 @@ const DynamicQuizTable = () => {
     // Fetch the initial lock state from the backend
     const fetchLockState = async () => {
       try {
-        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/getLockState/global`); // Assuming 'global' as a key for global lock state
+        const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/getLockState/global`); // Assuming 'global' as a key for global lock state
         const data = await response.json();
         setIsLocked(data.lock_state);
       } catch (error) {
@@ -116,7 +116,7 @@ const DynamicQuizTable = () => {
   const toggleLockState = async (quizSetId: string) => {
     // Function to toggle lock state
     try {
-      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/${quizSetId}`, {
+      const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/${quizSetId}`, {
         method: 'POST',
       });
       if (response.ok) {
@@ -131,7 +131,7 @@ const DynamicQuizTable = () => {
 
   const toggleLock = async () => {
     try {
-        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/global`, {
+        const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/toggleLockState/global`, {
             method: 'POST',
         });
         if (response.ok) {
@@ -247,7 +247,7 @@ const DynamicQuizTable = () => {
   // Function to handle the renaming on 'Enter' key
   const handleRename = async (quizSetId: string, newTitle: string) => {
     try {
-      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/renameQuizSet/${quizSetId}`, {
+      const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/renameQuizSet/${quizSetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_title: newTitle }),
@@ -280,7 +280,7 @@ const DynamicQuizTable = () => {
   const handleDeleteQuizSet = async () => {
     if (deleteQuizSetId) {
       try {
-        const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-351164672.ap-southeast-2.elb.amazonaws.com/api/deleteQuizSet/${deleteQuizSetId}`, {
+        const response = await fetch(`http://a9184e9e7d5f94758bf1670e8fb3fa88-841219625.ap-southeast-2.elb.amazonaws.com/api/deleteQuizSet/${deleteQuizSetId}`, {
           method: 'DELETE',
         });
         if (response.ok) {
