@@ -1,46 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   namespace: three-tier
-  name: mongodb
-spec: 
+  name: postgres
+spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb
+      app: postgres
   template:
     metadata:
-      labels: 
-        app: mongodb
-    spec: 
+      labels:
+        app: postgres
+    spec:
       containers:
-      - name: mon
-        image: mongo:4.4.6
-        command:
-            - "numactl"
-            - "--interleave=all"
-            - "mongod"
-            - "--wiredTigerCacheSizeGB"
-            - "0.1"
-            - "--bind_ip"
-            - "0.0.0.0"
+      - name: postgres
+        image: postgres:13  # Using the official PostgreSQL image
         ports:
-        - containerPort: 27017
-        env: 
-          - name: MONGO_INITDB_ROOT_USERNAME
+        - containerPort: 5432
+        env:
+          - name: POSTGRES_USER
             valueFrom:
               secretKeyRef:
-                name: mongo-sec
+                name: postgres-secret
                 key: username
-          - name: MONGO_INITDB_ROOT_PASSWORD
+          - name: POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: mongo-sec
+                name: postgres-secret
                 key: password
+          - name: POSTGRES_DB
+            value: quizdb  # Database name for your quiz app
         volumeMounts:
-          - name: mongo-volume
-            mountPath: /data/db
-      volumes: 
-      - name: mongo-volume
+          - name: postgres-volume
+            mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-volume
         persistentVolumeClaim:
-          claimName: mongo-volume-claim
+          claimName: postgres-volume-claim
