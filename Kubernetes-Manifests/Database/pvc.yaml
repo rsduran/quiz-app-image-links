@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: postgres-volume-claim
+  name: postgres-volume-claim-1
   namespace: three-tier
 spec: 
   accessModes:  
