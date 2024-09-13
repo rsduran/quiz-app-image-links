@@ -27,4 +27,4 @@ RUN pip install -U langchain-community
 EXPOSE 5000
 
 # Run the backend, waiting for the PostgreSQL service to be ready
-CMD ["./wait-for-it.sh", "db:5432", "--", "python", "main.py"]
+CMD ["./wait-for-it.sh", "postgres-svc:5432", "--", "python", "main.py"]
