@@ -67,7 +67,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
     console.log("Final URLs sent to Backend:", JSON.stringify(urls, null, 2));
   
     try {
-      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/startScraping', {
+      const response = await fetch(`http://k8s-threetie-mainlb-b5b9250791-1739950720.ap-southeast-2.elb.amazonaws.com/api/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: quizSetTitle, urls }),
