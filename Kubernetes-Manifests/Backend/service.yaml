@@ -3,13 +3,11 @@ kind: Service
 metadata:
   name: backend-service
   namespace: three-tier
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
 spec: 
   ports:
   - port: 5000
     protocol: TCP
     targetPort: 5000  # Ensure the target port is set to your backend container's port
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     role: backend
