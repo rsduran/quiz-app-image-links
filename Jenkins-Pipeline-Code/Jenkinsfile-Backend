@@ -17,12 +17,12 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git credentialsId: 'GITHUB', url: 'https://github.com/rsduran/quiz-app.git'
+                git credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app.git' // Updated to use GitHub credentials
             }
         }
         stage('Sonarqube Analysis') {
             steps {
-                dir('backend') { // Updated the directory path
+                dir('backend') {
                     withSonarQubeEnv('sonar-server') {
                         sh ''' $SCANNER_HOME/bin/sonar-scanner \
                         -Dsonar.projectName=three-tier-backend \
@@ -40,7 +40,7 @@ pipeline {
         }
         stage('OWASP Dependency-Check Scan') {
             steps {
-                dir('backend') { // Updated the directory path
+                dir('backend') {
                     dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
                     dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
@@ -48,7 +48,7 @@ pipeline {
         }
         stage('Trivy File Scan') {
             steps {
-                dir('backend') { // Updated the directory path
+                dir('backend') {
                     sh 'trivy fs . > trivyfs.txt'
                 }
             }
@@ -56,7 +56,7 @@ pipeline {
         stage("Docker Image Build") {
             steps {
                 script {
-                    dir('backend') { // Updated the directory path
+                    dir('backend') {
                         sh 'docker system prune -f'
                         sh 'docker container prune -f'
                         sh 'docker build -t ${DOCKER_REPO_NAME}:${BUILD_NUMBER} .'
@@ -96,7 +96,7 @@ pipeline {
                             sed -i "s/${DOCKER_REPO_NAME}:${imageTag}/${DOCKER_REPO_NAME}:${BUILD_NUMBER}/" deployment.yaml
                             git add deployment.yaml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                         '''
                     }
                 }
