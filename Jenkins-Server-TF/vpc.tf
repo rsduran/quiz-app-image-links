@@ -44,10 +44,10 @@ resource "aws_route_table_association" "rt-association" {
 
 resource "aws_security_group" "security-group" {
   vpc_id      = aws_vpc.vpc.id
-  description = "Allowing Jenkins, Sonarqube, SSH Access"
+  description = "Allowing Jenkins, Sonarqube, PostgreSQL, SSH Access"
 
   ingress = [
-    for port in [22, 8080, 9000, 9090, 80] : {
+    for port in [22, 8080, 9000, 9090, 80, 5432] : {
       description      = "TLS from VPC"
       from_port        = port
       to_port          = port
