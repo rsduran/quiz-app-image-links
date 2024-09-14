@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: three-tier
   name: postgres
+  namespace: three-tier
 spec:
   replicas: 1
   selector:
@@ -15,26 +15,30 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:13  # Using the official PostgreSQL image
+        image: postgres:latest
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          value: "quizdb"
         ports:
         - containerPort: 5432
-        env:
-          - name: POSTGRES_USER
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secret
-                key: username
-          - name: POSTGRES_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secret
-                key: password
-          - name: POSTGRES_DB
-            value: quizdb  # Database name for your quiz app
         volumeMounts:
-          - name: postgres-volume
-            mountPath: /var/lib/postgresql/data
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-storage
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "until pg_isready -U $POSTGRES_USER -h localhost; do echo 'Waiting for postgres...'; sleep 2; done; psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE USER user WITH PASSWORD 'password';\"; psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON DATABASE quizdb TO user;\""]
       volumes:
-      - name: postgres-volume
+      - name: postgres-storage
         persistentVolumeClaim:
-          claimName: postgres-volume-claim
+          claimName: postgres-pvc
