@@ -37,7 +37,7 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
 
   const fetchDiscussionComments = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/getDiscussionComments/${question_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getDiscussionComments/${question_id}`);
       const data = await response.json();
       if (data.discussion_comments) {
         const commentPattern = /(.+?)said:(.+ago):(.+)/;
@@ -137,20 +137,20 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     localStorage.setItem(`loading-${question_id}`, 'true'); // Set loading state in local storage
     if (!fetchedExplanation) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/getFurtherExplanation/${question_id}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getFurtherExplanation/${question_id}`);
         const data = await response.json();
         if (data.explanation) {
           localStorage.setItem(`furtherExplanation-${question_id}`, data.explanation);
           setFurtherExplanation(formatBotResponse(data.explanation));
           setFetchedExplanation(true);
         } else {
-          const newResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/getFurtherExplanation`, {
+          const newResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(questionDetails)
           });
           const newData = await newResponse.json();
-          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/saveFurtherExplanation`, {
+          await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/saveFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })
@@ -172,14 +172,14 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     setLoadingReload(true);
     try {
       // Make a new request to the server for a fresh explanation
-      const newResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/getFurtherExplanation`, {
+      const newResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(questionDetails)
       });
       const newData = await newResponse.json();
       // Save the new explanation to the database
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/saveFurtherExplanation`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/saveFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation })

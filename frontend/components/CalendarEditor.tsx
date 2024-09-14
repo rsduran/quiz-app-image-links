@@ -45,7 +45,7 @@ const CalendarEditor = () => {
   }, [date]);
 
   const fetchEditorContent = () => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/getEditorContent`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getEditorContent`)
       .then(response => response.json())
       .then(data => {
         setEditorContent(data.content);
@@ -58,7 +58,7 @@ const CalendarEditor = () => {
     setEditorContent(content);
     localStorage.setItem('editorContent', content);
 
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/saveEditorContent`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/saveEditorContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),

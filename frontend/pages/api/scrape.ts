@@ -1,4 +1,4 @@
-// pages/api/scrape.ts
+// pages/scrape.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -6,7 +6,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       // You might want to validate the input here
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/startScraping`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(req.body),

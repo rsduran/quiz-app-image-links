@@ -34,14 +34,14 @@ spec:
         # Add liveness and readiness probes
         livenessProbe:
           httpGet:
-            path: /api/health  # Assuming this is your health check endpoint
+            path: /health  # Assuming this is your health check endpoint
             port: 5000
           initialDelaySeconds: 10  # Delay before the probe starts
           periodSeconds: 10  # Probe interval
 
         readinessProbe:
           httpGet:
-            path: /api/health  # Assuming this is your health check endpoint
+            path: /health  # Assuming this is your health check endpoint
             port: 5000
           initialDelaySeconds: 15  # Delay before starting the readiness check
           periodSeconds: 10  # Probe interval
