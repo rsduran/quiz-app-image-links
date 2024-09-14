@@ -27,7 +27,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: DATABASE_URL
-            value: postgresql://user:password@postgres:5432/quizdb  # PostgreSQL connection string
+            value: postgresql://my_user:password@postgres:5432/quizdb  # PostgreSQL connection string
         ports:
         - containerPort: 5000  # Assuming your backend runs on port 5000
 
