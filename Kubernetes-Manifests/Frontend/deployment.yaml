@@ -26,7 +26,7 @@ spec:
         image: rsduran/frontend:1  # Using DockerHub public repo
         imagePullPolicy: Always
         env:
-          - name: NEXT_APP_BACKEND_URL
+          - name: NEXT_PUBLIC_BACKEND_URL
             value: "http://k8s-threetie-mainlb-b5b9250791-590477292.ap-southeast-2.elb.amazonaws.com/api"  # Replace with your backend service URL
         ports:
         - containerPort: 3000
