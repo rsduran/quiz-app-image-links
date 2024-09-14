@@ -15,6 +15,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
 
   const handleScrape = async () => {
     if (!quizSetTitle.trim()) {
+      console.error('Scrape Error: Quiz set title is empty.');
       toast({
         title: "Invalid Title",
         description: "Quiz set title cannot be empty.",
@@ -25,7 +26,8 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
       });
       return;
     }
-  
+
+    console.log('Starting the scraping process...');
     const processingToastId = toast({
       title: 'Processing...',
       description: 'Scraping is in progress. Please wait.',
@@ -34,15 +36,15 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
       isClosable: true,
       position: 'bottom-right',
     });
-  
+
     setIsScraping(true);
-  
+
     const lines = scrapeInput.split('\n');
     let urls = lines.map(line => {
-      console.log("Original Line:", line);
+      console.log("Processing line:", line);
       line = line.trim();
       if (!line) return null;
-  
+
       // Support for both specified formats
       if (line.includes("examveda")) {
         if (line.includes(',')) { // Format with start and end page
@@ -63,25 +65,24 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
         return { base_url, start_url, end_url };
       }
     }).filter(line => line);
-  
+
     console.log("Final URLs sent to Backend:", JSON.stringify(urls, null, 2));
-  
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: quizSetTitle, urls }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-  
+
       const data = await response.json();
-      // Removed the automatic download PDF functionality
-  
+      console.log('Scraping completed successfully:', data);
+
       onScrapeComplete(true, quizSetTitle);
-  
       toast({
         title: "Scraping Completed",
         description: "New quiz set added successfully.",
@@ -104,21 +105,28 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
     } finally {
       toast.close(processingToastId);
       setIsScraping(false);
+      console.log('Scraping process ended.');
     }
   };  
 
-// Function to download the quiz set as a PDF
-const downloadQuizPdf = async (quizSetId: string) => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/downloadQuizPdf/${quizSetId}`);
-  const blob = await response.blob();
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.download = `${quizSetTitle}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-};
+  // Function to download the quiz set as a PDF
+  const downloadQuizPdf = async (quizSetId: string) => {
+    try {
+      console.log(`Downloading PDF for quiz set ID: ${quizSetId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/downloadQuizPdf/${quizSetId}`);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${quizSetTitle}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      console.log('PDF download completed.');
+    } catch (error) {
+      console.error('Error during PDF download:', error);
+    }
+  };
 
   return (
     <Box>

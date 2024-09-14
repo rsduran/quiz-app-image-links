@@ -1,6 +1,6 @@
 # routes.py
 
-from app_init import app, db  # Absolute imports
+from app_init import app, db, logger  # Absolute imports
 from flask import request, jsonify, session, send_file
 from models import QuizSet, Question, EditorContent, FurtherExplanation  # Absolute imports
 from scraping_helpers import process_question, process_pinoybix_question, process_examveda_question, process_examprimer_question, fetch_discussion_comments  # Absolute imports
@@ -52,13 +52,16 @@ def strip_tags(html):
 def home():
     return {"status": "success", "message": "Your application is running. Use /startScraping endpoint to start scraping."}
 
+# Updated health check route with logging
 @app.route('/api/health', methods=['GET'])
 def health_check():
     try:
         # Perform a simple database query
         db.session.execute('SELECT 1')
+        logger.info('Health check passed, database connected.')
         return jsonify({'status': 'healthy', 'database': 'connected'}), 200
     except Exception as e:
+        logger.error(f'Health check failed: {e}')
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 @app.route('/api/startScraping', methods=['POST'])
@@ -66,42 +69,62 @@ def start_scraping():
     data = request.json
     quiz_title = data.get('title', 'New Quiz Set')
     new_quiz_set = QuizSet(title=quiz_title)
-    db.session.add(new_quiz_set)
-    db.session.commit()
+
+    try:
+        db.session.add(new_quiz_set)
+        db.session.commit()
+        logger.info(f"Created new quiz set with title: {quiz_title} and ID: {new_quiz_set.id}")
+    except Exception as e:
+        logger.error(f"Failed to create new quiz set: {e}")
+        db.session.rollback()
+        return jsonify({"message": "Failed to create new quiz set.", "error": str(e)}), 500
 
     question_counter = 1
-    for url_set in data['urls']:
+    for url_set in data.get('urls', []):
         if isinstance(url_set, dict):
             base_url = url_set.get('base_url', '')
-            if 'indiabix' in base_url or 'pinoybix' in base_url:
-                start_url = int(url_set.get('start_url', 1))
-                end_url = int(url_set.get('end_url', start_url))
-                for url_number in range(start_url, end_url + 1):
-                    if 'indiabix' in base_url:
-                        question_counter = process_question(base_url, url_number, question_counter, new_quiz_set.id)
-                    elif 'pinoybix' in base_url:
-                        question_counter = process_pinoybix_question(base_url, url_number, question_counter, new_quiz_set.id, db, Question)
-            elif 'examveda' in base_url:
-                start_page = int(url_set.get('start_page', 1))
-                end_page = int(url_set.get('end_page', 10))
-                question_counter = process_examveda_question(base_url, start_page, end_page, question_counter, new_quiz_set.id, db, Question)
-            elif 'web.archive.org' in base_url:
-                question_counter = process_examprimer_question(base_url, question_counter, new_quiz_set.id, db, Question)
-            else:
-                print(f"Invalid URL set format or missing URL components: {url_set}")
+            try:
+                if 'indiabix' in base_url or 'pinoybix' in base_url:
+                    start_url = int(url_set.get('start_url', 1))
+                    end_url = int(url_set.get('end_url', start_url))
+                    for url_number in range(start_url, end_url + 1):
+                        if 'indiabix' in base_url:
+                            question_counter = process_question(base_url, url_number, question_counter, new_quiz_set.id)
+                        elif 'pinoybix' in base_url:
+                            question_counter = process_pinoybix_question(base_url, url_number, question_counter, new_quiz_set.id, db, Question)
+                elif 'examveda' in base_url:
+                    start_page = int(url_set.get('start_page', 1))
+                    end_page = int(url_set.get('end_page', 10))
+                    question_counter = process_examveda_question(base_url, start_page, end_page, question_counter, new_quiz_set.id, db, Question)
+                elif 'web.archive.org' in base_url:
+                    question_counter = process_examprimer_question(base_url, question_counter, new_quiz_set.id, db, Question)
+                else:
+                    logger.warning(f"Invalid URL set format or missing URL components: {url_set}")
+            except Exception as e:
+                logger.error(f"Error processing URL set {url_set}: {e}")
         elif isinstance(url_set, str):
-            if "pinoybix" in url_set:
-                question_counter = process_pinoybix_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            elif "indiabix" in url_set:
-                question_counter = process_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            elif "examveda" in url_set:
-                question_counter = process_examveda_question(url_set, 1, 10, question_counter, new_quiz_set.id, db, Question)
-            elif "web.archive.org" in url_set:
-                question_counter = process_examprimer_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            else:
-                print(f"Unrecognized URL format: {url_set}")
+            try:
+                if "pinoybix" in url_set:
+                    question_counter = process_pinoybix_question(url_set, question_counter, new_quiz_set.id, db, Question)
+                elif "indiabix" in url_set:
+                    question_counter = process_question(url_set, question_counter, new_quiz_set.id, db, Question)
+                elif "examveda" in url_set:
+                    question_counter = process_examveda_question(url_set, 1, 10, question_counter, new_quiz_set.id, db, Question)
+                elif "web.archive.org" in url_set:
+                    question_counter = process_examprimer_question(url_set, question_counter, new_quiz_set.id, db, Question)
+                else:
+                    logger.warning(f"Unrecognized URL format: {url_set}")
+            except Exception as e:
+                logger.error(f"Error processing URL: {url_set}: {e}")
 
-    db.session.commit()
+    try:
+        db.session.commit()
+        logger.info(f"Scraping completed for quiz set ID: {new_quiz_set.id}")
+    except Exception as e:
+        logger.error(f"Failed to commit changes to database: {e}")
+        db.session.rollback()
+        return jsonify({"message": "Failed to complete scraping.", "error": str(e)}), 500
+
     return jsonify({"message": "Scraping completed.", "quiz_set_id": str(new_quiz_set.id)}), 200
 
 @app.route('/api/getQuestionsByQuizSet/<string:quiz_set_id>', methods=['GET'])
