@@ -58,14 +58,3 @@ sudo apt install trivy -y
 
 # Installing Helm
 sudo snap install helm --classic
-
-# Installing PostgreSQL
-sudo apt install postgresql postgresql-contrib -y
-
-# Configure PostgreSQL
-sudo -u postgres psql <<EOF
-CREATE USER user WITH PASSWORD 'password';
-CREATE DATABASE quizdb;
-GRANT ALL PRIVILEGES ON DATABASE quizdb TO user;
-\q
-EOF

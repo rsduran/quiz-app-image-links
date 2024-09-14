@@ -48,9 +48,9 @@ def strip_tags(html):
     s.feed(html)
     return s.get_data()
 
-@app.route('/api', methods=['GET'])
+@app.route('/api/', methods=['GET'])
 def home():
-    return {"status": "success", "message": "Your application is running. Use /api/startScraping endpoint to start scraping."}
+    return {"status": "success", "message": "Your application is running. Use /startScraping endpoint to start scraping."}
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
