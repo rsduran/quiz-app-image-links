@@ -23,7 +23,7 @@ spec:
     spec: 
       containers:
       - name: frontend
-        image: rsduran/frontend:1  # Using DockerHub public repo
+        image: rsduran/frontend:3  # Using DockerHub public repo
         imagePullPolicy: Always
         env:
           - name: NEXT_PUBLIC_BACKEND_URL
