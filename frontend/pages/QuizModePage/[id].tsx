@@ -620,7 +620,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
 
   return (
     <LoadingLayout key={selectedFilter}>
-      <Box padding={4}>
+      <Box p={4}>
         {/* Parent Container */}
         <Flex flexDirection="column" alignItems="center">
           
@@ -673,7 +673,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
                 colorScheme="teal"
               />
             </Flex>
-  
+
             {/* Right Part for additional options */}
             <Flex alignItems="center" gap={2}>
               <Select
@@ -714,7 +714,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
                   _hover={{ backgroundColor: iconHoverBg }} 
                 />
               </Tooltip>
-  
+
               {/* Theme Toggle Button */}
               <IconButton
                 icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
@@ -725,110 +725,111 @@ const updateScore = async (questionId: number, scoreChange: number) => {
               />
             </Flex>
           </Flex>
-  
-          {/* Middle Part for question navigation */}
-          <Flex justifyContent="center" alignItems="center" width="100%" marginBottom={4}>
-            {/* Previous Button */}
-            <IconButton
-              aria-label="Previous"
-              icon={<ArrowLeftIcon />}
-              onClick={() => handleNavigate('prev')}
-              backgroundColor="transparent"
-              _hover={{
-                backgroundColor: iconHoverBg,
-                borderRadius: 'full',
-                borderColor: 'transparent'
-              }}
-              isRound
-              marginRight={2}
-            />
-  
-            {/* Question Navigation Input */}
-            <Input
-              type="number"
-              value={currentQuestionIndex + 1}
-              onChange={(event) => handleNavigate('goto', Number(event.target.value))}
-              width="75px"
-              marginRight={2}
-              fontSize="15px"
-            />
-            <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
-  
-            {/* Next Button */}
-            <IconButton
-              aria-label="Next"
-              icon={<ArrowRightIcon />}
-              onClick={() => handleNavigate('next')}
-              backgroundColor="transparent"
-              _hover={{
-                backgroundColor: iconHoverBg,
-                borderRadius: 'full',
-                borderColor: 'transparent'
-              }}
-              isRound
-            />
-          </Flex>
-  
-          {/* Question Card */}
-          <QuestionDisplay
-            question={displayedQuestion}
-            onOptionSelect={handleOptionSelect}
-            selectedOption={displayedQuestion.userSelectedOption}
-            cardBgColor={cardBgColor}
-            cardTextColor={cardTextColor}
-            unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
-          />
-  
-          {/* Conditional rendering for Flip Card and Additional Info */}
-          {showFlipCard && (
-            <>
-              {/* Flip Card for Answer Reveal */}
-              <Flex justifyContent="center" marginY={4} alignItems="center" gap={4}>
-                <FlipCard
-                  isFlipped={isCardFlipped}
-                  onClick={handleFlipCard}
-                  frontContent={<Box padding={4}>Click to reveal answer</Box>}
-                  backContent={<Box padding={4}>Answer: {displayedQuestion.answer}</Box>} // Ensure this reflects shuffled state
+
+    {/* Middle Part for question navigation */}
+    <Flex justifyContent="center" alignItems="center" width="100%" marginBottom={4}>
+      {/* Previous Button */}
+      <IconButton
+        aria-label="Previous"
+        icon={<ArrowLeftIcon />}
+        onClick={() => handleNavigate('prev')}
+        backgroundColor="transparent"
+        _hover={{
+          backgroundColor: iconHoverBg,
+          borderRadius: 'full',
+          borderColor: 'transparent'
+        }}
+        isRound
+        marginRight={2}
+      />
+
+      {/* Question Navigation Input */}
+      <Input
+        type="number"
+        value={currentQuestionIndex + 1}
+        onChange={(event) => handleNavigate('goto', Number(event.target.value))}
+        width="75px"
+        marginRight={2}
+        fontSize="15px"
+      />
+      <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
+
+      {/* Next Button */}
+      <IconButton
+        aria-label="Next"
+        icon={<ArrowRightIcon />}
+        onClick={() => handleNavigate('next')}
+        backgroundColor="transparent"
+        _hover={{
+          backgroundColor: iconHoverBg,
+          borderRadius: 'full',
+          borderColor: 'transparent'
+        }}
+        isRound
+      />
+    </Flex>
+
+  </Flex>
+
+        {/* Question Card */}
+        <QuestionDisplay
+          question={displayedQuestion}
+          onOptionSelect={handleOptionSelect}
+          selectedOption={displayedQuestion.userSelectedOption}
+          cardBgColor={cardBgColor}
+          cardTextColor={cardTextColor}
+          unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
+        />
+
+        {/* Conditional rendering for Flip Card and Additional Info */}
+        {showFlipCard && (
+          <>
+            {/* Flip Card for Answer Reveal */}
+            <Flex justify="center" my={4} align="center" gap={4}>
+              <FlipCard
+                isFlipped={isCardFlipped}
+                onClick={handleFlipCard}
+                frontContent={<Box p={4}>Click to reveal answer</Box>}
+                backContent={<Box p={4}>Answer: {displayedQuestion.answer}</Box>} // Ensure this reflects shuffled state
+              />
+            </Flex>
+
+            {isCardFlipped && ( // Render Additional Info only if card is flipped
+              <>
+                <Divider my={4} />
+
+                {/* Additional Info */}
+                <AdditionalInfo
+                  url={safeUrl}
+                  explanation={safeExplanation}
+                  discussion_link={displayedQuestion.discussion_link} // Pass actual discussion link
+                  question_id={displayedQuestion.id}
+                  questionDetails={{
+                    question_text: displayedQuestion.question,
+                    options: displayedQuestion.options,
+                    answer: displayedQuestion.answer,
+                  }}
                 />
-              </Flex>
-  
-              {isCardFlipped && (
-                <>
-                  <Divider marginY={4} />
-  
-                  {/* Additional Info */}
-                  <AdditionalInfo
-                    url={safeUrl}
-                    explanation={safeExplanation}
-                    discussion_link={displayedQuestion.discussion_link}
-                    question_id={displayedQuestion.id}
-                    questionDetails={{
-                      question_text: displayedQuestion.question,
-                      options: displayedQuestion.options,
-                      answer: displayedQuestion.answer,
-                    }}
-                  />
-  
-                  <Divider marginY={4} />
-                </>
-              )}
-            </>
-          )}
-  
-          {/* Modals */}
-          <SearchModal
-            isOpen={isSearchModalOpen}
-            onClose={onSearchModalClose}
-            searchKeyword={searchKeyword}
-            onSearchChange={handleSearchChange}
-            questions={questions}
-            onNavigateToQuestion={onNavigateToQuestion}
-            favorites={favorites}
-            currentFilter={selectedFilter}
-            getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
-          />
-  
-          <UnansweredQuestionsModal
+
+                <Divider my={4} />
+              </>
+            )}
+          </>
+        )}
+
+        <SearchModal
+          isOpen={isSearchModalOpen}
+          onClose={onSearchModalClose}
+          searchKeyword={searchKeyword}
+          onSearchChange={handleSearchChange}
+          questions={questions}
+          onNavigateToQuestion={onNavigateToQuestion}
+          favorites={favorites}
+          currentFilter={selectedFilter}
+          getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
+        />
+
+        <UnansweredQuestionsModal
             isOpen={isUnansweredQuestionsModalOpen}
             onClose={() => setIsUnansweredQuestionsModalOpen(false)}
             unansweredQuestions={unansweredQuestions}
@@ -838,34 +839,33 @@ const updateScore = async (questionId: number, scoreChange: number) => {
             onSubmitWithUnanswered={onSubmitWithUnanswered}
             currentFilter={selectedFilter}
             getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
-          />
-  
-          <SummaryModal
+        />
+
+        <SummaryModal
             isOpen={isSummaryModalOpen}
             onClose={() => setIsSummaryModalOpen(false)}
             score={score}
             totalQuestions={questions.length}
             navigateToIncorrect={() => navigateToIncorrect(onNavigateToQuestion)}
             incorrectQuestionsCount={questions.filter(q => q.userSelectedOption !== q.answer).length}
-          />
-  
-          {/* Confirmation Modal */}
-          <ConfirmationModal 
+        />
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal 
             isOpen={isConfirmationModalOpen} 
             onClose={onConfirmationModalClose} 
             onConfirm={confirmShuffleQuestions}
-          />
-  
-          {/* Reset Questions Modal */}
-          <ResetModal
-            isOpen={isResetModalOpen}
-            onClose={onResetModalClose}
-            onReset={handleReset}
-          />
-        </Flex>
+        />
+
+        {/* Reset Questions Modal */}
+        <ResetModal
+          isOpen={isResetModalOpen}
+          onClose={onResetModalClose}
+          onReset={handleReset}
+        />
       </Box>
     </LoadingLayout>
-  );    
+  );  
 }
 
 export default QuizModePage;
