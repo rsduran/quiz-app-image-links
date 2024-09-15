@@ -620,211 +620,215 @@ const updateScore = async (questionId: number, scoreChange: number) => {
 
   return (
     <LoadingLayout key={selectedFilter}>
-      <Box p={4}>
-      {/* Parent Flex Container */}
-      <Flex justifyContent="space-between" align="center" mb={4}>
-        
-        {/* Left Part with back and reset buttons */}
-        <Flex align="center" gap={2}>
-          <Tooltip label="Go Back" aria-label="Go Back Tooltip">
-            <IconButton
-              aria-label="Go back"
-              icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
-              onClick={() => router.push('/Dashboard')}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          <Tooltip label="Reset" aria-label="Reset Tooltip">
-            <IconButton
-              aria-label="Reset"
-              icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={onResetModalOpen}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          {/* Eye Icon for toggling Flip Card and Additional Info */}
-          <Tooltip label={eyeIcon === 'open' ? "Hide Flip Card" : "Show Flip Card"} aria-label="Toggle Flip Card Visibility Tooltip">
-            <IconButton
-              aria-label="Toggle Flip Card Visibility"
-              icon={eyeIcon === 'open' ? <EyeOpenIcon style={{ width: '20px', height: '20px' }} /> : <EyeNoneIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={toggleFlipCardVisibility}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          <Tooltip label="Submit" aria-label="Submit Tooltip">
-            <Button
-              onClick={handleSubmit}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            >
-              Submit
-            </Button>
-          </Tooltip>
-          <Switch
-            isChecked={optionsShuffled}
-            onChange={handleToggleShuffleOptions}
-            size="lg"
-            colorScheme="teal"
-          />
-        </Flex>
-
-        {/* Middle Part for question navigation */}
-        <Flex justifyContent="center" align="center">
-          {/* Previous Button */}
-          <IconButton
-            aria-label="Previous"
-            icon={<ArrowLeftIcon />}
-            onClick={() => handleNavigate('prev')}
-            backgroundColor="transparent"
-            _hover={{
-              backgroundColor: iconHoverBg,
-              borderRadius: 'full',
-              borderColor: 'transparent'
-            }}
-            isRound
-            marginRight={2}
-          />
-
-          {/* Question Navigation Input */}
-          <Input
-            type="number"
-            value={currentQuestionIndex + 1}
-            onChange={(e) => handleNavigate('goto', Number(e.target.value))}
-            width="75px"
-            marginRight={2}
-            fontSize="15px"
-          />
-          <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
-
-          {/* Next Button */}
-          <IconButton
-            aria-label="Next"
-            icon={<ArrowRightIcon />}
-            onClick={() => handleNavigate('next')}
-            backgroundColor="transparent"
-            _hover={{
-              backgroundColor: iconHoverBg,
-              borderRadius: 'full',
-              borderColor: 'transparent'
-            }}
-            isRound
-          />
-        </Flex>
-
-        {/* Rightmost Part for additional options */}
-        <Flex align="center" gap={2}>
-          <Select
-            value={selectedFilter}
-            onChange={(e) => handleDropdownChange(e.target.value)}
-            width="180px"
-          >
-            <option value="all">All Questions</option>
-            <option value="favorites">Favorites</option>
-            <option value="incorrect">Incorrect</option>
-            <option value="answered">Answered</option>
-            <option value="unanswered">Unanswered</option>
-          </Select>
-          <Tooltip label="Favorites" aria-label="Favorites Tooltip">
-            <IconButton
-              aria-label="Favorites"
-              icon={isQuestionAvailable && favorites.has(displayedQuestion.id) ? <StarFilledIcon style={{ width: '20px', height: '20px' }} /> : <StarIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={() => isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />         
-          </Tooltip>
-          <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
-            <IconButton 
-              aria-label="Shuffle" 
-              icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />} 
-              onClick={onConfirmationModalOpen} 
-              backgroundColor="transparent" 
-              _hover={{ backgroundColor: iconHoverBg }} 
-            />
-          </Tooltip>
-          <Tooltip label="Search" aria-label="Search Tooltip">
-            <IconButton 
-              aria-label="Search" 
-              icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />} 
-              onClick={onSearchModalOpen} 
-              backgroundColor="transparent" 
-              _hover={{ backgroundColor: iconHoverBg }} 
-            />
-          </Tooltip>
-
-          {/* Theme Toggle Button */}
-          <IconButton
-            icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
-            onClick={toggleColorMode}
-            aria-label={'Toggle Dark Mode'}
-            backgroundColor={iconBg}
-            _hover={{ backgroundColor: iconHoverBg }}
-          />
-        </Flex>
-      </Flex>
-
-        {/* Question Card */}
-        <QuestionDisplay
-          question={displayedQuestion}
-          onOptionSelect={handleOptionSelect}
-          selectedOption={displayedQuestion.userSelectedOption}
-          cardBgColor={cardBgColor}
-          cardTextColor={cardTextColor}
-          unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
-        />
-
-        {/* Conditional rendering for Flip Card and Additional Info */}
-        {showFlipCard && (
-          <>
-            {/* Flip Card for Answer Reveal */}
-            <Flex justify="center" my={4} align="center" gap={4}>
-              <FlipCard
-                isFlipped={isCardFlipped}
-                onClick={handleFlipCard}
-                frontContent={<Box p={4}>Click to reveal answer</Box>}
-                backContent={<Box p={4}>Answer: {displayedQuestion.answer}</Box>} // Ensure this reflects shuffled state
+      <Box padding={4}>
+        {/* Parent Container */}
+        <Flex flexDirection="column" alignItems="center">
+          
+          {/* Top Section with Left and Right Parts */}
+          <Flex justifyContent="space-between" alignItems="center" width="100%" marginBottom={4}>
+            
+            {/* Left Part with back and reset buttons */}
+            <Flex alignItems="center" gap={2}>
+              <Tooltip label="Go Back" aria-label="Go Back Tooltip">
+                <IconButton
+                  aria-label="Go back"
+                  icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
+                  onClick={() => router.push('/Dashboard')}
+                  backgroundColor="transparent"
+                  _hover={{ backgroundColor: iconHoverBg }}
+                />
+              </Tooltip>
+              <Tooltip label="Reset" aria-label="Reset Tooltip">
+                <IconButton
+                  aria-label="Reset"
+                  icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
+                  onClick={onResetModalOpen}
+                  backgroundColor="transparent"
+                  _hover={{ backgroundColor: iconHoverBg }}
+                />
+              </Tooltip>
+              {/* Eye Icon for toggling Flip Card and Additional Info */}
+              <Tooltip label={eyeIcon === 'open' ? "Hide Flip Card" : "Show Flip Card"} aria-label="Toggle Flip Card Visibility Tooltip">
+                <IconButton
+                  aria-label="Toggle Flip Card Visibility"
+                  icon={eyeIcon === 'open' ? <EyeOpenIcon style={{ width: '20px', height: '20px' }} /> : <EyeNoneIcon style={{ width: '20px', height: '20px' }} />}
+                  onClick={toggleFlipCardVisibility}
+                  backgroundColor="transparent"
+                  _hover={{ backgroundColor: iconHoverBg }}
+                />
+              </Tooltip>
+              <Tooltip label="Submit" aria-label="Submit Tooltip">
+                <Button
+                  onClick={handleSubmit}
+                  backgroundColor="transparent"
+                  _hover={{ backgroundColor: iconHoverBg }}
+                >
+                  Submit
+                </Button>
+              </Tooltip>
+              <Switch
+                isChecked={optionsShuffled}
+                onChange={handleToggleShuffleOptions}
+                size="large"
+                colorScheme="teal"
               />
             </Flex>
-
-            {isCardFlipped && ( // Render Additional Info only if card is flipped
-              <>
-                <Divider my={4} />
-
-                {/* Additional Info */}
-                <AdditionalInfo
-                  url={safeUrl}
-                  explanation={safeExplanation}
-                  discussion_link={displayedQuestion.discussion_link} // Pass actual discussion link
-                  question_id={displayedQuestion.id}
-                  questionDetails={{
-                    question_text: displayedQuestion.question,
-                    options: displayedQuestion.options,
-                    answer: displayedQuestion.answer,
-                  }}
+  
+            {/* Right Part for additional options */}
+            <Flex alignItems="center" gap={2}>
+              <Select
+                value={selectedFilter}
+                onChange={(event) => handleDropdownChange(event.target.value)}
+                width="180px"
+              >
+                <option value="all">All Questions</option>
+                <option value="favorites">Favorites</option>
+                <option value="incorrect">Incorrect</option>
+                <option value="answered">Answered</option>
+                <option value="unanswered">Unanswered</option>
+              </Select>
+              <Tooltip label="Favorites" aria-label="Favorites Tooltip">
+                <IconButton
+                  aria-label="Favorites"
+                  icon={isQuestionAvailable && favorites.has(displayedQuestion.id) ? <StarFilledIcon style={{ width: '20px', height: '20px' }} /> : <StarIcon style={{ width: '20px', height: '20px' }} />}
+                  onClick={() => isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)}
+                  backgroundColor="transparent"
+                  _hover={{ backgroundColor: iconHoverBg }}
+                />         
+              </Tooltip>
+              <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
+                <IconButton 
+                  aria-label="Shuffle" 
+                  icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />} 
+                  onClick={onConfirmationModalOpen} 
+                  backgroundColor="transparent" 
+                  _hover={{ backgroundColor: iconHoverBg }} 
                 />
-
-                <Divider my={4} />
-              </>
-            )}
-          </>
-        )}
-
-        <SearchModal
-          isOpen={isSearchModalOpen}
-          onClose={onSearchModalClose}
-          searchKeyword={searchKeyword}
-          onSearchChange={handleSearchChange}
-          questions={questions}
-          onNavigateToQuestion={onNavigateToQuestion}
-          favorites={favorites}
-          currentFilter={selectedFilter}
-          getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
-        />
-
-        <UnansweredQuestionsModal
+              </Tooltip>
+              <Tooltip label="Search" aria-label="Search Tooltip">
+                <IconButton 
+                  aria-label="Search" 
+                  icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />} 
+                  onClick={onSearchModalOpen} 
+                  backgroundColor="transparent" 
+                  _hover={{ backgroundColor: iconHoverBg }} 
+                />
+              </Tooltip>
+  
+              {/* Theme Toggle Button */}
+              <IconButton
+                icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
+                onClick={toggleColorMode}
+                aria-label="Toggle Dark Mode"
+                backgroundColor={iconBg}
+                _hover={{ backgroundColor: iconHoverBg }}
+              />
+            </Flex>
+          </Flex>
+  
+          {/* Middle Part for question navigation */}
+          <Flex justifyContent="center" alignItems="center" width="100%" marginBottom={4}>
+            {/* Previous Button */}
+            <IconButton
+              aria-label="Previous"
+              icon={<ArrowLeftIcon />}
+              onClick={() => handleNavigate('prev')}
+              backgroundColor="transparent"
+              _hover={{
+                backgroundColor: iconHoverBg,
+                borderRadius: 'full',
+                borderColor: 'transparent'
+              }}
+              isRound
+              marginRight={2}
+            />
+  
+            {/* Question Navigation Input */}
+            <Input
+              type="number"
+              value={currentQuestionIndex + 1}
+              onChange={(event) => handleNavigate('goto', Number(event.target.value))}
+              width="75px"
+              marginRight={2}
+              fontSize="15px"
+            />
+            <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
+  
+            {/* Next Button */}
+            <IconButton
+              aria-label="Next"
+              icon={<ArrowRightIcon />}
+              onClick={() => handleNavigate('next')}
+              backgroundColor="transparent"
+              _hover={{
+                backgroundColor: iconHoverBg,
+                borderRadius: 'full',
+                borderColor: 'transparent'
+              }}
+              isRound
+            />
+          </Flex>
+  
+          {/* Question Card */}
+          <QuestionDisplay
+            question={displayedQuestion}
+            onOptionSelect={handleOptionSelect}
+            selectedOption={displayedQuestion.userSelectedOption}
+            cardBgColor={cardBgColor}
+            cardTextColor={cardTextColor}
+            unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
+          />
+  
+          {/* Conditional rendering for Flip Card and Additional Info */}
+          {showFlipCard && (
+            <>
+              {/* Flip Card for Answer Reveal */}
+              <Flex justifyContent="center" marginY={4} alignItems="center" gap={4}>
+                <FlipCard
+                  isFlipped={isCardFlipped}
+                  onClick={handleFlipCard}
+                  frontContent={<Box padding={4}>Click to reveal answer</Box>}
+                  backContent={<Box padding={4}>Answer: {displayedQuestion.answer}</Box>} // Ensure this reflects shuffled state
+                />
+              </Flex>
+  
+              {isCardFlipped && (
+                <>
+                  <Divider marginY={4} />
+  
+                  {/* Additional Info */}
+                  <AdditionalInfo
+                    url={safeUrl}
+                    explanation={safeExplanation}
+                    discussion_link={displayedQuestion.discussion_link}
+                    question_id={displayedQuestion.id}
+                    questionDetails={{
+                      question_text: displayedQuestion.question,
+                      options: displayedQuestion.options,
+                      answer: displayedQuestion.answer,
+                    }}
+                  />
+  
+                  <Divider marginY={4} />
+                </>
+              )}
+            </>
+          )}
+  
+          {/* Modals */}
+          <SearchModal
+            isOpen={isSearchModalOpen}
+            onClose={onSearchModalClose}
+            searchKeyword={searchKeyword}
+            onSearchChange={handleSearchChange}
+            questions={questions}
+            onNavigateToQuestion={onNavigateToQuestion}
+            favorites={favorites}
+            currentFilter={selectedFilter}
+            getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
+          />
+  
+          <UnansweredQuestionsModal
             isOpen={isUnansweredQuestionsModalOpen}
             onClose={() => setIsUnansweredQuestionsModalOpen(false)}
             unansweredQuestions={unansweredQuestions}
@@ -834,33 +838,34 @@ const updateScore = async (questionId: number, scoreChange: number) => {
             onSubmitWithUnanswered={onSubmitWithUnanswered}
             currentFilter={selectedFilter}
             getQuestionIndex={(questionId) => getQuestionIndex(questionId, selectedFilter)}
-        />
-
-        <SummaryModal
+          />
+  
+          <SummaryModal
             isOpen={isSummaryModalOpen}
             onClose={() => setIsSummaryModalOpen(false)}
             score={score}
             totalQuestions={questions.length}
             navigateToIncorrect={() => navigateToIncorrect(onNavigateToQuestion)}
             incorrectQuestionsCount={questions.filter(q => q.userSelectedOption !== q.answer).length}
-        />
-
-        {/* Confirmation Modal */}
-        <ConfirmationModal 
+          />
+  
+          {/* Confirmation Modal */}
+          <ConfirmationModal 
             isOpen={isConfirmationModalOpen} 
             onClose={onConfirmationModalClose} 
             onConfirm={confirmShuffleQuestions}
-        />
-
-        {/* Reset Questions Modal */}
-        <ResetModal
-          isOpen={isResetModalOpen}
-          onClose={onResetModalClose}
-          onReset={handleReset}
-        />
+          />
+  
+          {/* Reset Questions Modal */}
+          <ResetModal
+            isOpen={isResetModalOpen}
+            onClose={onResetModalClose}
+            onReset={handleReset}
+          />
+        </Flex>
       </Box>
     </LoadingLayout>
-  );  
+  );    
 }
 
 export default QuizModePage;
