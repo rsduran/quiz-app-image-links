@@ -135,7 +135,7 @@ This project involves the comprehensive deployment of a three-tier application u
 
 3. **Wait for Setup to Complete:** Allow time for the EC2 instance to show a "2/2 checks passed" status in the AWS console.
 
-4. **Access Jenkins:** Copy the public IP of the EC2 instance and navigate to: http://<public-ip>:8080
+4. **Access Jenkins:** Copy the public IP of the EC2 instance and navigate to: `http://<public-ip>:8080`
 
 5. **Retrieve Jenkins Admin Password:** SSH into the instance and retrieve the admin password using the command below:
 ```bash
@@ -190,14 +190,16 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ## 6. Setting Up SonarQube
 
 1. **Run SonarQube in Docker:**
-   - On your Jenkins server (or another machine with Docker installed), run the following command to start the SonarQube server:
-     ```bash
-     docker run -d --name sonarqube -p 9000:9000 sonarqube
-     ```
-   - Wait for the container to start up. Access SonarQube by navigating to:
-     ```
-     http://<jenkins-server-public-ip>:9000
-     ```
+   - The `docker run` command to start the SonarQube server is already included in the `install.sh` script. When the Jenkins server starts, wait a few minutes for the SonarQube container to be up and running.
+   - **Check SonarQube Status:** 
+     - Access SonarQube by navigating to:
+       ```
+       http://<jenkins-server-public-ip>:9000
+       ```
+     - If SonarQube is not running, use the following command to start it manually:
+       ```bash
+       docker run -d --name sonarqube -p 9000:9000 sonarqube
+       ```
    - The default login credentials are:
      - Username: `admin`
      - Password: `admin`
@@ -395,20 +397,24 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 
 8. **Add Applications in ArgoCD:**
    - Use the `+ NEW APP` button in the ArgoCD dashboard to add your applications.
-   - For each application (e.g., `Database`, `Backend`, `Frontend`), provide the following details:
-     - **Application Name:** Name of the application (e.g., `database-app`, `backend-app`).
+   - For each application (e.g., `Database`, `Backend`, `Frontend`, `Ingress`), provide the following details:
+     - **Application Name:** Name of the application (e.g., `database-app`, `backend-app`, `frontend-app`, `ingress-app`).
      - **Project:** Default.
      - **Sync Policy:** Manual or Automatic as per preference.
      - **Repository URL:** URL of the Git repository containing your Kubernetes manifests.
-     - **Path:** Path to the directory containing the manifests for each application (e.g., `Kubernetes-Manifests/Database`).
+     - **Path:** Path to the directory containing the manifests for each application (e.g., `Kubernetes-Manifests/Database`, `Kubernetes-Manifests/ingress.yaml` for the ingress).
      - **Destination Cluster:** Use the default (`https://kubernetes.default.svc`).
      - **Namespace:** `three-tier`.
 
-9. **Sync Applications:**
-   - After adding the applications, click on each application and select `SYNC` to deploy the resources in your Kubernetes cluster.
+9. **Add Ingress Application:** 
+   - Adding an application for ingress will create the LoadBalancer needed for the frontend service.
+   - Ensure you specify the path to the ingress manifest (e.g., `Kubernetes-Manifests/ingress.yaml`) in the **Path** field when creating the ingress application in ArgoCD.
 
-10. **Verify Application Health:**
-   - Ensure each application is in a `Healthy` state and that there are no errors. If any application shows issues, review the logs and adjust the manifests as needed.
+10. **Sync Applications:**
+   - After adding the applications, click on each application in ArgoCD and select `SYNC` to deploy the resources in your Kubernetes cluster.
+
+11. **Verify Application Health:**
+   - Ensure each application, including the ingress, is in a `Healthy` state and that there are no errors. If any application shows issues, review the logs and adjust the manifests as needed.
 
 ---
 
