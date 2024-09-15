@@ -40,7 +40,6 @@ pipeline {
                 }
             }
         }
-
         stage('Update Deployment file') {
             environment {
                 GIT_REPO_NAME = "quiz-app"
@@ -57,6 +56,7 @@ pipeline {
                             
                             // Check if the deployment.yaml file has been modified
                             def changes = sh(script: 'git status --porcelain', returnStdout: true).trim()
+                            
                             if (changes) {
                                 // Add changes, commit, and push to the GitHub repository
                                 sh '''
@@ -67,7 +67,7 @@ pipeline {
                                     git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                                 '''
                             } else {
-                                echo "No changes detected in deployment.yaml, skipping commit."
+                                echo "No changes detected in deployment.yaml, skipping commit and push."
                             }
                         }
                     }
