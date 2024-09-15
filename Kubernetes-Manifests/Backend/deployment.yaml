@@ -3,30 +3,33 @@ kind: Deployment
 metadata:
   name: backend
   namespace: three-tier
-  labels:
-    role: backend
-    env: demo
 spec:
   replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 25%
   selector:
     matchLabels:
-      role: backend
+      app: backend
   template:
     metadata:
       labels:
-        role: backend
+        app: backend
     spec:
       containers:
-      - name: backend
-        image: rsduran/backend:15  # Update this based on your versioning
-        imagePullPolicy: Always
-        env:
-          - name: DATABASE_URL
-            value: postgresql://my_user:password@postgres:5432/quizdb  # PostgreSQL connection string
-        ports:
-        - containerPort: 5000  # Assuming your backend runs on port 5000
+        - name: backend
+          image: rsduran/backend:15
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: "postgres"  # Use the service name from the database YAML
+            - name: DB_NAME
+              value: "quizdb"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret  # Matches the secret in the database YAML
+                  key: postgres-user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret  # Matches the secret in the database YAML
+                  key: postgres-password

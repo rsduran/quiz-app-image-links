@@ -3,30 +3,21 @@ kind: Deployment
 metadata:
   name: frontend
   namespace: three-tier
-  labels:
-    role: frontend
-    env: demo
-spec: 
-  replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 25%
+spec:
+  replicas: 2
   selector:
-    matchLabels: 
-      role: frontend
+    matchLabels:
+      app: frontend
   template:
     metadata:
       labels:
-        role: frontend
-    spec: 
+        app: frontend
+    spec:
       containers:
-      - name: frontend
-        image: rsduran/frontend:6  # Using DockerHub public repo
-        imagePullPolicy: Always
-        env:
-          - name: NEXT_PUBLIC_BACKEND_URL
-            value: "http://k8s-threetie-mainlb-b5b9250791-1469659349.ap-southeast-2.elb.amazonaws.com/api"  # Replace with your backend service URL
-        ports:
-        - containerPort: 3000
+        - name: frontend
+          image: rsduran/frontend:6
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_BACKEND_URL
+              value: "http://k8s-threetie-mainlb-b5b9250791-1469659349.ap-southeast-2.elb.amazonaws.com/api"
