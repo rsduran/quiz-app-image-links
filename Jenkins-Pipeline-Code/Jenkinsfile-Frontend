@@ -58,14 +58,20 @@ pipeline {
                             echo "Current Image Tag: ${currentTag}"
                             sh "sed -i 's|${DOCKER_REPO_NAME}:${currentTag}|${DOCKER_REPO_NAME}:${BUILD_NUMBER}|' deployment.yaml"
                             
-                            // Add changes, commit, and push to the GitHub repository
-                            sh '''
-                                git config user.email "reineirsamonteduran@gmail.com"
-                                git config user.name "rsduran"
-                                git add deployment.yaml
-                                git diff-index --quiet HEAD || git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
-                                git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                            '''
+                            // Check if the deployment.yaml file has been modified
+                            def changes = sh(script: 'git status --porcelain', returnStdout: true).trim()
+                            if (changes) {
+                                // Add changes, commit, and push to the GitHub repository
+                                sh '''
+                                    git config user.email "reineirsamonteduran@gmail.com"
+                                    git config user.name "rsduran"
+                                    git add deployment.yaml
+                                    git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
+                                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                                '''
+                            } else {
+                                echo "No changes detected in deployment.yaml, skipping commit."
+                            }
                         }
                     }
                 }
