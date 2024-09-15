@@ -43,9 +43,9 @@ spec:
                   sleep 2;
                 done;
                 sleep 5;  # Add a brief delay to ensure readiness
-                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE USER my_user WITH PASSWORD 'password';\";
-                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO my_user;\";
-                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON SCHEMA public TO my_user;\";
+                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE USER \\\"my_user\\\" WITH PASSWORD 'password';\";
+                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO \\\"my_user\\\";\";
+                psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON SCHEMA public TO \\\"my_user\\\";\";
                 psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, content TEXT NOT NULL);\"
               "]
       volumes:
