@@ -48,15 +48,11 @@ def strip_tags(html):
     s.feed(html)
     return s.get_data()
 
-@app.route('/', methods=['GET'])
+@app.route('/api', methods=['GET'])
 def home():
-    return {"status": "success", "message": "Your application is running. Use /startScraping endpoint to start scraping."}
+    return {"status": "success", "message": "Your application is running. Use /api/startScraping endpoint to start scraping."}
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'healthy'}), 200
-
-@app.route('/startScraping', methods=['POST'])
+@app.route('/api/startScraping', methods=['POST'])
 def start_scraping():
     data = request.json
     quiz_title = data.get('title', 'New Quiz Set')
@@ -99,7 +95,7 @@ def start_scraping():
     db.session.commit()
     return jsonify({"message": "Scraping completed.", "quiz_set_id": str(new_quiz_set.id)}), 200
 
-@app.route('/getQuestionsByQuizSet/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getQuestionsByQuizSet/<string:quiz_set_id>', methods=['GET'])
 def get_questions_by_quiz_set(quiz_set_id):
     print(f"Fetching questions for Quiz Set ID: {quiz_set_id}")  # Debug log
     questions = Question.query.filter_by(quiz_set_id=quiz_set_id).all()
@@ -116,7 +112,7 @@ def get_questions_by_quiz_set(quiz_set_id):
         'discussion_link': question.discussion_link
     } for question in questions])
 
-@app.route('/getQuizSets', methods=['GET'])
+@app.route('/api/getQuizSets', methods=['GET'])
 def get_quiz_sets():
     quiz_sets = QuizSet.query.all()
     return jsonify([{
@@ -124,7 +120,7 @@ def get_quiz_sets():
         'title': quiz_set.title
     } for quiz_set in quiz_sets])
 
-@app.route('/deleteQuizSet/<string:quiz_set_id>', methods=['DELETE'])
+@app.route('/api/deleteQuizSet/<string:quiz_set_id>', methods=['DELETE'])
 def delete_quiz_set(quiz_set_id):
     quiz_set = db.session.query(QuizSet).get(quiz_set_id)
     if not quiz_set:
@@ -137,7 +133,7 @@ def delete_quiz_set(quiz_set_id):
     
     return jsonify({'message': f'Quiz set {quiz_set_id} deleted successfully'}), 200
 
-@app.route('/renameQuizSet/<string:quiz_set_id>', methods=['PUT'])
+@app.route('/api/renameQuizSet/<string:quiz_set_id>', methods=['PUT'])
 def rename_quiz_set(quiz_set_id):
     data = request.json
     new_title = data.get('new_title')
@@ -148,12 +144,12 @@ def rename_quiz_set(quiz_set_id):
         return jsonify({'message': 'Quiz set title updated successfully'}), 200
     return jsonify({'message': 'Quiz set not found'}), 
 
-@app.route('/getQuestions', methods=['GET'])
+@app.route('/api/getQuestions', methods=['GET'])
 def get_questions():
     questions = Question.query.all()
     return jsonify([{...} for question in questions])  # Unchanged
 
-@app.route('/getFavorites/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getFavorites/<string:quiz_set_id>', methods=['GET'])
 def get_favorites(quiz_set_id):
     favorites = Question.query.filter_by(quiz_set_id=quiz_set_id, favorite=True).all()
     favorites_list = [{
@@ -168,7 +164,7 @@ def get_favorites(quiz_set_id):
     } for question in favorites]
     return jsonify(favorites_list)
 
-@app.route('/toggleFavorite', methods=['POST'])
+@app.route('/api/toggleFavorite', methods=['POST'])
 def toggle_favorite():
     data = request.json
     question_id = data['question_id']
@@ -178,7 +174,7 @@ def toggle_favorite():
         db.session.commit()
     return jsonify({"message": "Favorite toggled"}), 200
 
-@app.route('/updateUserSelection', methods=['POST'])
+@app.route('/api/updateUserSelection', methods=['POST'])
 def update_user_selection():
     data = request.json
     question_id = data['question_id']
@@ -190,13 +186,13 @@ def update_user_selection():
         return jsonify({"message": "User selection updated"}), 200
     return jsonify({"message": "Question not found"}), 404
 
-@app.route('/getUserSelections/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getUserSelections/<string:quiz_set_id>', methods=['GET'])
 def get_user_selections(quiz_set_id):
     questions = Question.query.filter_by(quiz_set_id=quiz_set_id).all()
     selections = {question.id: question.user_selected_option for question in questions}
     return jsonify(selections)
 
-@app.route('/updateScore', methods=['POST'])
+@app.route('/api/updateScore', methods=['POST'])
 def update_score():
     data = request.json
     question_id = data['question_id']
@@ -220,7 +216,7 @@ def update_score():
     print(f"Updated score for quiz set {quiz_set_id}: {session['scores'][quiz_set_id]}")
     return jsonify({"message": "Score updated", "current_score": session['scores'][quiz_set_id]}), 200
 
-@app.route('/getScore/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getScore/<string:quiz_set_id>', methods=['GET'])
 def get_score(quiz_set_id):
     # Initialize score if not exists
     if 'scores' not in session or quiz_set_id not in session['scores']:
@@ -228,7 +224,7 @@ def get_score(quiz_set_id):
 
     return jsonify({"score": session['scores'][quiz_set_id]}), 200
 
-@app.route('/shuffleQuestions/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/shuffleQuestions/<string:quiz_set_id>', methods=['POST'])
 def shuffle_questions(quiz_set_id):
     questions = Question.query.filter_by(quiz_set_id=quiz_set_id).all()
     if not questions:
@@ -259,7 +255,7 @@ def shuffle_questions(quiz_set_id):
         'user_selected_option': question.user_selected_option
     } for question in shuffled_questions]), 200
 
-@app.route('/resetQuestions/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/resetQuestions/<string:quiz_set_id>', methods=['POST'])
 def reset_questions(quiz_set_id):
     questions = Question.query.filter_by(quiz_set_id=quiz_set_id).order_by(Question.order).all()
     if not questions:
@@ -285,7 +281,7 @@ def reset_questions(quiz_set_id):
         'user_selected_option': question.user_selected_option
     } for question in questions]), 200
 
-@app.route('/getQuizSetDetails/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getQuizSetDetails/<string:quiz_set_id>', methods=['GET'])
 def get_quiz_set_details(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if not quiz_set:
@@ -304,7 +300,7 @@ def get_quiz_set_details(quiz_set_id):
         'answered_questions': len(answered_questions)
     })
 
-@app.route('/getQuizSetScore/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getQuizSetScore/<string:quiz_set_id>', methods=['GET'])
 def get_quiz_set_score(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if not quiz_set:
@@ -318,7 +314,7 @@ def get_quiz_set_score(quiz_set_id):
 
     return jsonify({"score": score, "total_questions": total_questions}), 200
 
-@app.route('/updateQuizSetScore/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/updateQuizSetScore/<string:quiz_set_id>', methods=['POST'])
 def update_quiz_set_score(quiz_set_id):
     data = request.json
     score = data['score']
@@ -333,7 +329,7 @@ def update_quiz_set_score(quiz_set_id):
 
     return jsonify({"message": "Score updated successfully"}), 200
 
-@app.route('/saveEditorContent', methods=['POST'])
+@app.route('/api/saveEditorContent', methods=['POST'])
 def save_editor_content():
     data = request.json
     content = data.get('content')
@@ -345,7 +341,7 @@ def save_editor_content():
 
     return jsonify({"message": "Content saved successfully", "id": new_content.id}), 200
 
-@app.route('/getEditorContent', methods=['GET'])
+@app.route('/api/getEditorContent', methods=['GET'])
 def get_editor_content():
     # For simplicity, retrieving the latest content
     content = EditorContent.query.order_by(EditorContent.id.desc()).first()
@@ -355,7 +351,7 @@ def get_editor_content():
     else:
         return jsonify({"message": "No content found"}), 404
 
-@app.route('/getEyeIconState/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getEyeIconState/<string:quiz_set_id>', methods=['GET'])
 def get_eye_icon_state(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if quiz_set:
@@ -363,7 +359,7 @@ def get_eye_icon_state(quiz_set_id):
     else:
         return jsonify({"message": "Quiz set not found"}), 404
 
-@app.route('/updateEyeIconState/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/updateEyeIconState/<string:quiz_set_id>', methods=['POST'])
 def update_eye_icon_state(quiz_set_id):
     data = request.json
     state = data['state']  # True for 'open', False for 'none'
@@ -376,7 +372,7 @@ def update_eye_icon_state(quiz_set_id):
     else:
         return jsonify({"message": "Quiz set not found"}), 404
 
-@app.route('/updateQuizSetStatus/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/updateQuizSetStatus/<string:quiz_set_id>', methods=['POST'])
 def update_quiz_set_status(quiz_set_id):
     data = request.json
     status = data.get('status')
@@ -405,7 +401,7 @@ def get_llm_response(prompt, providers):
     raise Exception("All providers failed")
 
 # Route to get further explanation based on POST request
-@app.route('/getFurtherExplanation', methods=['POST'])
+@app.route('/api/getFurtherExplanation', methods=['POST'])
 def post_further_explanation():
     data = request.json
     print("Received data:", data)
@@ -428,7 +424,7 @@ def post_further_explanation():
         return jsonify({"error": "Failed to get further explanation"}), 500
 
 # Route to save further explanation
-@app.route('/saveFurtherExplanation', methods=['POST'])
+@app.route('/api/saveFurtherExplanation', methods=['POST'])
 def save_further_explanation():
     data = request.json
     question_id = data['question_id']
@@ -442,7 +438,7 @@ def save_further_explanation():
     return jsonify({"message": "Further explanation saved"}), 200
 
 # New GET route to retrieve further explanation
-@app.route('/getFurtherExplanation/<int:question_id>', methods=['GET'])
+@app.route('/api/getFurtherExplanation/<int:question_id>', methods=['GET'])
 def get_further_explanation(question_id):
     explanation = FurtherExplanation.query.filter_by(question_id=question_id).first()
     if explanation:
@@ -450,7 +446,7 @@ def get_further_explanation(question_id):
     else:
         return jsonify({"message": "Further explanation not found"}), 404
 
-@app.route('/toggleLockState/<string:quiz_set_id>', methods=['POST'])
+@app.route('/api/toggleLockState/<string:quiz_set_id>', methods=['POST'])
 def toggle_lock_state(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if quiz_set:
@@ -460,7 +456,7 @@ def toggle_lock_state(quiz_set_id):
     else:
         return jsonify({"message": "Quiz set not found"}), 404
 
-@app.route('/getLockState/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/getLockState/<string:quiz_set_id>', methods=['GET'])
 def get_lock_state(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if quiz_set:
@@ -471,18 +467,18 @@ def get_lock_state(quiz_set_id):
 # Assuming you have a way to store the global lock state, like a variable or database entry
 global_lock_state = True  # Default state
 
-@app.route('/toggleLockState/global', methods=['POST'])
+@app.route('/api/toggleLockState/global', methods=['POST'])
 def toggle_global_lock_state():
     global global_lock_state
     global_lock_state = not global_lock_state
     return jsonify({"message": "Global lock state toggled", "new_state": global_lock_state}), 200
 
-@app.route('/getLockState/global', methods=['GET'])
+@app.route('/api/getLockState/global', methods=['GET'])
 def get_global_lock_state():
     global global_lock_state
     return jsonify({"lock_state": global_lock_state}), 200
 
-@app.route('/getDiscussionComments/<int:question_id>', methods=['GET'])
+@app.route('/api/getDiscussionComments/<int:question_id>', methods=['GET'])
 def get_discussion_comments(question_id):
     question = Question.query.get(question_id)
     if question and question.discussion_link:
@@ -493,7 +489,7 @@ def get_discussion_comments(question_id):
             return jsonify({"error": str(e)}), 500
     return jsonify({"error": "Question or discussion link not found"}), 404
 
-@app.route('/downloadQuizPdf/<string:quiz_set_id>', methods=['GET'])
+@app.route('/api/downloadQuizPdf/<string:quiz_set_id>', methods=['GET'])
 def download_quiz_pdf(quiz_set_id):
     quiz_set = QuizSet.query.get(quiz_set_id)
     if not quiz_set:

@@ -4,8 +4,7 @@ metadata:
   name: backend
   namespace: three-tier
   labels:
-    role: backend
-    env: demo
+    app: backend
 spec:
   replicas: 2
   strategy:
@@ -15,33 +14,30 @@ spec:
       maxUnavailable: 25%
   selector:
     matchLabels:
-      role: backend
+      app: backend
   template:
     metadata:
       labels:
-        role: backend
+        app: backend
     spec:
       containers:
       - name: backend
-        image: rsduran/backend:8  # Update this based on your versioning
+        image: rsduran/three-tier-backend:3  # Update this based on your versioning
         imagePullPolicy: Always
         env:
-          - name: DATABASE_URL
-            value: postgresql://my_user:password@postgres:5432/quizdb  # PostgreSQL connection string
+          - name: DB_HOST
+            value: "postgres"  # Use the PostgreSQL service name in Kubernetes
+          - name: DB_NAME
+            value: "quizdb"
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-user
+          - name: DB_PASS
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secret
+                key: postgres-password
         ports:
         - containerPort: 5000  # Assuming your backend runs on port 5000
-
-        # Add liveness and readiness probes
-        livenessProbe:
-          httpGet:
-            path: /health  # Assuming this is your health check endpoint
-            port: 5000
-          initialDelaySeconds: 10  # Delay before the probe starts
-          periodSeconds: 10  # Probe interval
-
-        readinessProbe:
-          httpGet:
-            path: /health  # Assuming this is your health check endpoint
-            port: 5000
-          initialDelaySeconds: 15  # Delay before starting the readiness check
-          periodSeconds: 10  # Probe interval

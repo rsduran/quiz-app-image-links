@@ -3,11 +3,11 @@ kind: Service
 metadata:
   name: backend-service
   namespace: three-tier
-spec: 
+spec:
   ports:
   - port: 5000
     protocol: TCP
     targetPort: 5000  # Ensure the target port is set to your backend container's port
   type: ClusterIP
   selector:
-    role: backend
+    app: backend

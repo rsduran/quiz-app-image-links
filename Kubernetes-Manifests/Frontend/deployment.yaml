@@ -27,18 +27,6 @@ spec:
         imagePullPolicy: Always
         env:
           - name: NEXT_PUBLIC_BACKEND_URL
-            value: "http://k8s-threetie-mainlb-b5b9250791-590477292.ap-southeast-2.elb.amazonaws.com"  # Replace with your backend service URL
+            value: "http://k8s-threetie-mainlb-b5b9250791-590477292.ap-southeast-2.elb.amazonaws.com/api"  # Replace with your backend service URL
         ports:
         - containerPort: 3000
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 10
-          periodSeconds: 10

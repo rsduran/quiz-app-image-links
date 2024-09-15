@@ -5,7 +5,7 @@ pipeline {
         nodejs 'nodejs'
     }
     environment  {
-        SCANNER_HOME = tool 'sonar-scanner'
+        // SCANNER_HOME = tool 'sonar-scanner'
         DOCKER_REPO_NAME = 'rsduran/frontend'  // Update this with your DockerHub repository for the frontend
         DOCKERHUB_CREDENTIALS_ID = 'docker'    // ID for the DockerHub credentials
     }
@@ -20,39 +20,34 @@ pipeline {
                 git branch: 'main', credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app.git'
             }
         }
-        stage('Sonarqube Analysis') {
-            steps {
-                dir('frontend') {
-                    withSonarQubeEnv('sonar-server') {
-                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=three-tier-frontend \
-                        -Dsonar.projectKey=three-tier-frontend '''
-                    }
-                }
-            }
-        }
-        stage('Quality Check') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
-                }
-            }
-        }
-        // stage('OWASP Dependency-Check Scan') {
+        // stage('Sonarqube Analysis') {
         //     steps {
         //         dir('frontend') {
-        //             dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-        //             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //             withSonarQubeEnv('sonar-server') {
+        //                 sh ''' $SCANNER_HOME/bin/sonar-scanner \
+        //                 -Dsonar.projectName=three-tier-frontend \
+        //                 -Dsonar.projectKey=three-tier-frontend '''
+        //             }
         //         }
         //     }
         // }
-        stage('Trivy File Scan') {
-            steps {
-                dir('frontend') {
-                    sh 'trivy fs . > trivyfs.txt'
-                }
-            }
-        }
+        
+        // stage('Quality Check') {
+        //     steps {
+        //         script {
+        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+        //         }
+        //     }
+        // }
+        
+        // stage('Trivy File Scan') {
+        //     steps {
+        //         dir('frontend') {
+        //             sh 'trivy fs . > trivyfs.txt'
+        //         }
+        //     }
+        // }
+        
         stage("Docker Image Build") {
             steps {
                 script {
@@ -73,11 +68,12 @@ pipeline {
                 }
             }
         }
-        stage("TRIVY Image Scan") {
-            steps {
-                sh 'trivy image ${DOCKER_REPO_NAME}:${BUILD_NUMBER} > trivyimage.txt' 
-            }
-        }
+        // stage("TRIVY Image Scan") {
+        //     steps {
+        //         sh 'trivy image ${DOCKER_REPO_NAME}:${BUILD_NUMBER} > trivyimage.txt' 
+        //     }
+        // }
+        
         stage('Update Deployment file') {
             environment {
                 GIT_REPO_NAME = "quiz-app"

@@ -8,6 +8,8 @@ import { Calendar } from '@/components/ui/calendar';
 import 'react-quill/dist/quill.snow.css';
 import './custom-quill.css'; 
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+
 const QuillNoSSRWrapper = dynamic(() => import('react-quill'), {
   ssr: false,
   loading: () => <p>Loading ...</p>,
@@ -45,7 +47,7 @@ const CalendarEditor = () => {
   }, [date]);
 
   const fetchEditorContent = () => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/getEditorContent`)
+    fetch(`${backendUrl}/getEditorContent`)
       .then(response => response.json())
       .then(data => {
         setEditorContent(data.content);
@@ -58,7 +60,7 @@ const CalendarEditor = () => {
     setEditorContent(content);
     localStorage.setItem('editorContent', content);
 
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/saveEditorContent`, {
+    fetch(`${backendUrl}/saveEditorContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
