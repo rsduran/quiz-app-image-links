@@ -2,10 +2,11 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      // You might want to validate the input here
       const response = await fetch(`${backendUrl}/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
