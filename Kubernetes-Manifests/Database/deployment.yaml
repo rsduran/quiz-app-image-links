@@ -28,7 +28,7 @@ spec:
               name: postgres-secret
               key: postgres-password
         - name: POSTGRES_DB
-          value: "quizdb"
+          value: "mydatabase"
         ports:
         - containerPort: 5432
         volumeMounts:
@@ -38,9 +38,10 @@ spec:
           postStart:
             exec:
               command: ["/bin/sh", "-c", "until pg_isready -U $POSTGRES_USER -h localhost; do echo 'Waiting for postgres...'; sleep 2; done; \
-                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE USER my_user WITH PASSWORD 'password';\"; \
-                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO my_user;\"; \
-                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON SCHEMA public TO my_user;\""]
+                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE USER \\\"myuser\\\" WITH PASSWORD 'password';\"; \
+                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO \\\"myuser\\\";\"; \
+                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"GRANT ALL PRIVILEGES ON SCHEMA public TO \\\"myuser\\\";\"; \
+                        psql -U $POSTGRES_USER -d $POSTGRES_DB -c \"CREATE TABLE IF NOT EXISTS tasks (id SERIAL PRIMARY KEY, content TEXT NOT NULL);\""]
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
