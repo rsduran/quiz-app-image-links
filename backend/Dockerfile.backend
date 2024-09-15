@@ -11,6 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY . .
 
+# Install additional dependencies
+RUN pip install git+https://github.com/MIDORIBIN/langchain-gpt4free.git
+RUN pip install -U langchain-community
+
 # Install Gunicorn
 RUN pip install gunicorn
 
