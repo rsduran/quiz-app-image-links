@@ -28,7 +28,7 @@ spec:
               name: postgres-secret
               key: postgres-password
         - name: POSTGRES_DB
-          value: "mydatabase"
+          value: "quizdb"
         ports:
         - containerPort: 5432
         volumeMounts:
