@@ -621,136 +621,150 @@ const updateScore = async (questionId: number, scoreChange: number) => {
   return (
     <LoadingLayout key={selectedFilter}>
       <Box p={4}>
-        <Flex justifyContent="space-between" mb={4}>
-          {/* Left Part with back and reset buttons */}
-          <Flex flex="1" align="center" gap={2}>
-            <Tooltip label="Go Back" aria-label="Go Back Tooltip">
-              <IconButton
-                aria-label="Go back"
-                icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
-                onClick={() => router.push('/Dashboard')}
-                bg='transparent'
-                _hover={{ bg: iconHoverBg }}
-              />
-            </Tooltip>
-            <Tooltip label="Reset" aria-label="Reset Tooltip">
-              <IconButton
-                aria-label="Reset"
-                icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
-                onClick={onResetModalOpen}
-                bg='transparent'
-                _hover={{ bg: iconHoverBg }}
-              />
-            </Tooltip>
-            {/* Eye Icon for toggling Flip Card and Additional Info */}
-            <Tooltip label={eyeIcon === 'open' ? "Hide Flip Card" : "Show Flip Card"} aria-label="Toggle Flip Card Visibility Tooltip">
-              <IconButton
-                aria-label="Toggle Flip Card Visibility"
-                icon={eyeIcon === 'open' ? <EyeOpenIcon style={{ width: '20px', height: '20px' }} /> : <EyeNoneIcon style={{ width: '20px', height: '20px' }} />}
-                onClick={toggleFlipCardVisibility}
-                bg='transparent'
-                _hover={{ bg: iconHoverBg }}
-              />
-            </Tooltip>
-            <Tooltip label="Submit" aria-label="Submit Tooltip">
-              <Button
-                onClick={handleSubmit}
-                bg='transparent'
-                _hover={{ bg: iconHoverBg }}
-              >
-                Submit
-              </Button>
-            </Tooltip>
-            <Switch
-              isChecked={optionsShuffled}
-              onChange={handleToggleShuffleOptions}
-              size="lg"
-              colorScheme="teal"
-            />
-          </Flex>
-
-          {/* Middle Part for question navigation */}
-          <Flex flex="1" justify="center" align="center">
-            {/* Prev Button */}
+      {/* Parent Flex Container */}
+      <Flex justifyContent="space-between" align="center" mb={4}>
+        
+        {/* Left Part with back and reset buttons */}
+        <Flex align="center" gap={2}>
+          <Tooltip label="Go Back" aria-label="Go Back Tooltip">
             <IconButton
-              aria-label="Previous"
-              icon={<ArrowLeftIcon />}
-              onClick={() => handleNavigate('prev')}
-              bg='transparent'
-              _hover={{
-                bg: iconHoverBg,
-                borderRadius: 'full',
-                borderColor: 'transparent'
-              }}
-              isRound
-              mr={2}
+              aria-label="Go back"
+              icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
+              onClick={() => router.push('/Dashboard')}
+              backgroundColor="transparent"
+              _hover={{ backgroundColor: iconHoverBg }}
             />
-
-            {/* Question Navigation Input */}
-            <Input
-              type="number"
-              value={currentQuestionIndex + 1}
-              onChange={(e) => handleNavigate('goto', Number(e.target.value))}
-              w="75px"
-              mr={2}
-              fontSize="15px" // Add the fontSize property here
-            />
-            <Text mx={2} fontSize="15px">/ {filteredQuestions.length}</Text>
-
-            {/* Next Button */}
+          </Tooltip>
+          <Tooltip label="Reset" aria-label="Reset Tooltip">
             <IconButton
-              aria-label="Next"
-              icon={<ArrowRightIcon />}
-              onClick={() => handleNavigate('next')}
-              bg='transparent'
-              _hover={{
-                bg: iconHoverBg,
-                borderRadius: 'full',
-                borderColor: 'transparent'
-              }}
-              isRound
+              aria-label="Reset"
+              icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
+              onClick={onResetModalOpen}
+              backgroundColor="transparent"
+              _hover={{ backgroundColor: iconHoverBg }}
             />
-          </Flex>
-
-          {/* Rightmost Part for additional options */}
-          <Flex flex="1" align="center" gap={2}>
-            <Select
-              value={selectedFilter}
-              onChange={(e) => handleDropdownChange(e.target.value)}
-              w="180px"
+          </Tooltip>
+          {/* Eye Icon for toggling Flip Card and Additional Info */}
+          <Tooltip label={eyeIcon === 'open' ? "Hide Flip Card" : "Show Flip Card"} aria-label="Toggle Flip Card Visibility Tooltip">
+            <IconButton
+              aria-label="Toggle Flip Card Visibility"
+              icon={eyeIcon === 'open' ? <EyeOpenIcon style={{ width: '20px', height: '20px' }} /> : <EyeNoneIcon style={{ width: '20px', height: '20px' }} />}
+              onClick={toggleFlipCardVisibility}
+              backgroundColor="transparent"
+              _hover={{ backgroundColor: iconHoverBg }}
+            />
+          </Tooltip>
+          <Tooltip label="Submit" aria-label="Submit Tooltip">
+            <Button
+              onClick={handleSubmit}
+              backgroundColor="transparent"
+              _hover={{ backgroundColor: iconHoverBg }}
             >
-              <option value="all">All Questions</option>
-              <option value="favorites">Favorites</option>
-              <option value="incorrect">Incorrect</option>
-              <option value="answered">Answered</option>
-              <option value="unanswered">Unanswered</option>
-            </Select>
-            <Tooltip label="Favorites" aria-label="Favorites Tooltip">
-              <IconButton
-                aria-label="Favorites"
-                icon={isQuestionAvailable && favorites.has(displayedQuestion.id) ? <StarFilledIcon style={{ width: '20px', height: '20px' }} /> : <StarIcon style={{ width: '20px', height: '20px' }} />}
-                onClick={() => isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)}
-                bg='transparent'
-                _hover={{ bg: iconHoverBg }}
-              />         
-            </Tooltip>
-            <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
-              <IconButton aria-label="Shuffle" icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />} onClick={onConfirmationModalOpen} bg='transparent' _hover={{ bg: iconHoverBg }} />
-            </Tooltip>
-            <Tooltip label="Search" aria-label="Search Tooltip">
-              <IconButton aria-label="Search" icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />} onClick={onSearchModalOpen} bg='transparent' _hover={{ bg: iconHoverBg }} />
-            </Tooltip>
-
-            {/* Theme Toggle Button */}
-            <IconButton
-              icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={toggleColorMode}
-              aria-label={'Toggle Dark Mode'}
-              bg={iconBg}
-              _hover={{ bg: iconHoverBg }}
-            />
-          </Flex>
+              Submit
+            </Button>
+          </Tooltip>
+          <Switch
+            isChecked={optionsShuffled}
+            onChange={handleToggleShuffleOptions}
+            size="lg"
+            colorScheme="teal"
+          />
         </Flex>
+
+        {/* Middle Part for question navigation */}
+        <Flex justifyContent="center" align="center">
+          {/* Previous Button */}
+          <IconButton
+            aria-label="Previous"
+            icon={<ArrowLeftIcon />}
+            onClick={() => handleNavigate('prev')}
+            backgroundColor="transparent"
+            _hover={{
+              backgroundColor: iconHoverBg,
+              borderRadius: 'full',
+              borderColor: 'transparent'
+            }}
+            isRound
+            marginRight={2}
+          />
+
+          {/* Question Navigation Input */}
+          <Input
+            type="number"
+            value={currentQuestionIndex + 1}
+            onChange={(e) => handleNavigate('goto', Number(e.target.value))}
+            width="75px"
+            marginRight={2}
+            fontSize="15px"
+          />
+          <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
+
+          {/* Next Button */}
+          <IconButton
+            aria-label="Next"
+            icon={<ArrowRightIcon />}
+            onClick={() => handleNavigate('next')}
+            backgroundColor="transparent"
+            _hover={{
+              backgroundColor: iconHoverBg,
+              borderRadius: 'full',
+              borderColor: 'transparent'
+            }}
+            isRound
+          />
+        </Flex>
+
+        {/* Rightmost Part for additional options */}
+        <Flex align="center" gap={2}>
+          <Select
+            value={selectedFilter}
+            onChange={(e) => handleDropdownChange(e.target.value)}
+            width="180px"
+          >
+            <option value="all">All Questions</option>
+            <option value="favorites">Favorites</option>
+            <option value="incorrect">Incorrect</option>
+            <option value="answered">Answered</option>
+            <option value="unanswered">Unanswered</option>
+          </Select>
+          <Tooltip label="Favorites" aria-label="Favorites Tooltip">
+            <IconButton
+              aria-label="Favorites"
+              icon={isQuestionAvailable && favorites.has(displayedQuestion.id) ? <StarFilledIcon style={{ width: '20px', height: '20px' }} /> : <StarIcon style={{ width: '20px', height: '20px' }} />}
+              onClick={() => isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)}
+              backgroundColor="transparent"
+              _hover={{ backgroundColor: iconHoverBg }}
+            />         
+          </Tooltip>
+          <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
+            <IconButton 
+              aria-label="Shuffle" 
+              icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />} 
+              onClick={onConfirmationModalOpen} 
+              backgroundColor="transparent" 
+              _hover={{ backgroundColor: iconHoverBg }} 
+            />
+          </Tooltip>
+          <Tooltip label="Search" aria-label="Search Tooltip">
+            <IconButton 
+              aria-label="Search" 
+              icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />} 
+              onClick={onSearchModalOpen} 
+              backgroundColor="transparent" 
+              _hover={{ backgroundColor: iconHoverBg }} 
+            />
+          </Tooltip>
+
+          {/* Theme Toggle Button */}
+          <IconButton
+            icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
+            onClick={toggleColorMode}
+            aria-label={'Toggle Dark Mode'}
+            backgroundColor={iconBg}
+            _hover={{ backgroundColor: iconHoverBg }}
+          />
+        </Flex>
+      </Flex>
 
         {/* Question Card */}
         <QuestionDisplay
