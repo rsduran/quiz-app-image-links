@@ -493,3 +493,58 @@ sudo cat /var/lib/jenkins/secrets/initialAdminPassword
    - Once logged in, go to `Configuration > Data Sources` in the Grafana dashboard.
    - Add Prometheus as a data source using the URL: `http://prometheus-kube-prometheus-prometheus.monitoring:9090`.
    - After adding the data source, you can import pre-built dashboards or create your own for monitoring your cluster and application.
+
+---
+
+# Integrating GitHub with Jenkins using Webhooks
+
+Follow these steps to integrate GitHub with Jenkins using webhooks so that a push or pull request automatically triggers a Jenkins pipeline.
+
+## Step 1: Set Up the Jenkins Job
+
+### Create a Pipeline Job
+1. In Jenkins, click on **"New Item"**.
+2. Name the job and select **"Pipeline"**.
+3. Under the **"Pipeline"** section, define your pipeline script (either using a `Jenkinsfile` in your GitHub repository or directly in the Jenkins UI).
+
+### Configure the Source Code Management (SCM)
+1. In the job configuration, under **"Pipeline"**, select **"Pipeline script from SCM"**.
+2. Choose **"Git"** and provide the URL of your GitHub repository.
+3. Add credentials if the repository is private.
+
+### Set Up Triggers
+1. In the job configuration, scroll to the **"Build Triggers"** section.
+2. Check the **"GitHub hook trigger for GITScm polling"** option. This tells Jenkins to listen for GitHub webhooks to start the job.
+
+## Step 2: Install Required Plugins in Jenkins
+
+### GitHub Integration
+1. Go to **"Manage Jenkins"** > **"Manage Plugins"**.
+2. Under the **"Available"** tab, search for and install:
+   - **Git**
+   - **GitHub Integration Plugin** (This includes support for webhooks)
+
+## Step 3: Set Up the GitHub Webhook
+
+### Access Your GitHub Repository
+1. Go to the repository where you want to set up the webhook.
+2. Click on **"Settings"** > **"Webhooks"**.
+
+### Add a Webhook
+1. Click **"Add webhook"**.
+2. In the **Payload URL** field, enter the URL of your Jenkins server followed by `/github-webhook/` (e.g., `http://your-jenkins-server.com/github-webhook/`).
+3. **Content type**: Select `application/json`.
+4. **Secret**: Optionally, you can set a secret token for added security. This secret must be the same in your Jenkins GitHub configuration.
+5. **Events**: Choose the events you want to trigger the webhook. For example:
+   - Select **"Just the push event"** to trigger on push.
+   - Select **"Let me select individual events"** to trigger on specific actions like "Pull request".
+6. Click **"Add webhook"**.
+
+## Step 4: Test the Integration
+
+### Push a Change to GitHub
+1. Make a change in your repository (e.g., edit a file) and push it to the GitHub repository.
+
+### Check Jenkins
+1. Jenkins should automatically detect the webhook and trigger the pipeline job.
+2. In Jenkins, you can monitor the build in the job's console output.
