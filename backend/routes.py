@@ -55,61 +55,70 @@ def home():
 @app.route('/api/startScraping', methods=['POST'])
 def start_scraping():
     data = request.json
-    quiz_title = data.get('title', 'New Quiz Set')
-    new_quiz_set = QuizSet(title=quiz_title)
-    db.session.add(new_quiz_set)
-    db.session.commit()
+    quiz_title = data.get('title', 'New Quiz Set')  # Retrieve the title from the request data
+    new_quiz_set = QuizSet(title=quiz_title)  # Create a new quiz set object
+    db.session.add(new_quiz_set)  # Add the new quiz set to the database
+    db.session.commit()  # Commit the changes to generate an ID for the quiz set
 
-    question_counter = 1
+    global_question_counter = 1  # Initialize the global question counter
+
+    # Sequentially process each URL set to maintain order and ensure no overlaps
     for url_set in data['urls']:
         if isinstance(url_set, dict):
-            base_url = url_set.get('base_url', '')
-            if 'indiabix' in base_url or 'pinoybix' in base_url:
+            base_url = url_set.get('base_url', '')  # Extract the base URL
+
+            if 'indiabix' in base_url:
                 start_url = int(url_set.get('start_url', 1))
                 end_url = int(url_set.get('end_url', start_url))
                 for url_number in range(start_url, end_url + 1):
-                    if 'indiabix' in base_url:
-                        question_counter = process_question(base_url, url_number, question_counter, new_quiz_set.id)
-                    elif 'pinoybix' in base_url:
-                        question_counter = process_pinoybix_question(base_url, url_number, question_counter, new_quiz_set.id, db, Question)
+                    global_question_counter = process_question(base_url, url_number, global_question_counter, new_quiz_set.id)
+
+            elif 'pinoybix' in base_url:
+                global_question_counter = process_pinoybix_question(base_url, global_question_counter, new_quiz_set.id, db, Question)
+
             elif 'examveda' in base_url:
                 start_page = int(url_set.get('start_page', 1))
                 end_page = int(url_set.get('end_page', 10))
-                question_counter = process_examveda_question(base_url, start_page, end_page, question_counter, new_quiz_set.id, db, Question)
-            elif 'web.archive.org' in base_url:
-                question_counter = process_examprimer_question(base_url, question_counter, new_quiz_set.id, db, Question)
-            else:
-                print(f"Invalid URL set format or missing URL components: {url_set}")
-        elif isinstance(url_set, str):
-            if "pinoybix" in url_set:
-                question_counter = process_pinoybix_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            elif "indiabix" in url_set:
-                question_counter = process_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            elif "examveda" in url_set:
-                question_counter = process_examveda_question(url_set, 1, 10, question_counter, new_quiz_set.id, db, Question)
-            elif "web.archive.org" in url_set:
-                question_counter = process_examprimer_question(url_set, question_counter, new_quiz_set.id, db, Question)
-            else:
-                print(f"Unrecognized URL format: {url_set}")
+                global_question_counter = process_examveda_question(base_url, start_page, end_page, global_question_counter, new_quiz_set.id, db, Question)
 
-    db.session.commit()
+            elif 'web.archive.org' in base_url:
+                global_question_counter = process_examprimer_question(base_url, global_question_counter, new_quiz_set.id, db, Question)
+
+        elif isinstance(url_set, str):
+
+            if "pinoybix" in url_set:
+                global_question_counter = process_pinoybix_question(url_set, global_question_counter, new_quiz_set.id, db, Question)
+            elif "indiabix" in url_set:
+                global_question_counter = process_question(url_set, global_question_counter, new_quiz_set.id)
+            elif "examveda" in url_set:
+                global_question_counter = process_examveda_question(url_set, 1, 10, global_question_counter, new_quiz_set.id, db, Question)
+            elif "web.archive.org" in url_set:
+                global_question_counter = process_examprimer_question(url_set, global_question_counter, new_quiz_set.id, db, Question)
+
+        # After processing each URL set, commit the changes
+        db.session.commit()
+
+    # Return a success message
     return jsonify({"message": "Scraping completed.", "quiz_set_id": str(new_quiz_set.id)}), 200
 
 @app.route('/api/getQuestionsByQuizSet/<string:quiz_set_id>', methods=['GET'])
 def get_questions_by_quiz_set(quiz_set_id):
     print(f"Fetching questions for Quiz Set ID: {quiz_set_id}")  # Debug log
-    questions = Question.query.filter_by(quiz_set_id=quiz_set_id).all()
+    questions = Question.query.filter_by(quiz_set_id=quiz_set_id).order_by(Question.order).all()
 
     print(f"Found {len(questions)} questions for Quiz Set ID: {quiz_set_id}")  # Debugging: check number of questions found
 
     return jsonify([{
         'id': question.id,
+        'order': question.order,  # Include the order field
         'text': question.text,
         'options': question.options,
         'answer': question.answer,
         'url': question.url,
         'explanation': question.explanation,
-        'discussion_link': question.discussion_link
+        'discussion_link': question.discussion_link,
+        'favorite': question.favorite,
+        'user_selected_option': question.user_selected_option
     } for question in questions])
 
 @app.route('/api/getQuizSets', methods=['GET'])
@@ -243,7 +252,7 @@ def shuffle_questions(quiz_set_id):
     shuffled_questions = Question.query.filter_by(quiz_set_id=quiz_set_id).order_by(Question.order).all()
     return jsonify([{
         'id': question.id,
-        'order': question.order,
+        'order': question.order,  # Include the order field
         'text': question.text,
         'options': question.options,
         'answer': question.answer,

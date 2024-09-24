@@ -19,15 +19,25 @@ from selenium.webdriver.support import expected_conditions as EC
 
 # Helper functions
 def download_image(img_url, path, name):
-    full_path = os.path.join('./static/assets/images/background', path)
+    # Construct the full path for the image
+    full_path = os.path.join('../frontend/public/assets/images/background', path)
+
+    # Log the full path for debugging
+    print(f"Attempting to save image to: {os.path.join(full_path, name)}")
+    print(f"Image URL: {img_url}")
+
+    # Ensure the directory exists
     if not os.path.exists(full_path):
+        print(f"Creating directory: {full_path}")
         os.makedirs(full_path)
 
+    # Try to download the image
     try:
         response = requests.get(img_url, stream=True, verify=False)
         if response.status_code == 200:
             with open(os.path.join(full_path, name), 'wb') as out_file:
                 out_file.write(response.content)
+            print(f"Image successfully downloaded from: {img_url}")
             return True
         else:
             print(f"Failed to download image: {img_url} - HTTP Status Code: {response.status_code}")
@@ -92,127 +102,139 @@ def fetch_discussion_comments(discussion_link):
     return '\n'.join(comments)
 
 def process_question(base_url, url_number, question_counter, quiz_set_id):
-    global question_data
     # Check if URL starts with https://
     if not base_url.startswith('https://'):
         base_url = 'https://' + base_url
-    url = base_url + str(url_number).zfill(6)
+    url = base_url + str(url_number).zfill(6)  # Format the URL number to ensure it's padded with zeros if necessary
     MAX_RETRIES = 10
-    backoff_time = 3  
+    backoff_time = 3  # Time to wait before retrying in case of failure
 
+    # Retry mechanism for robust scraping
     for attempt in range(MAX_RETRIES):
         try:
-            time.sleep(backoff_time * attempt) 
+            time.sleep(backoff_time * attempt)  # Exponential backoff between retries
+            # Fetch the page content
             page = requests.get(url, headers={'User-Agent': choice(config.headers_list)}, verify=False)
-            page.raise_for_status()
-            break
+            page.raise_for_status()  # Ensure the request was successful
+            break  # Exit loop if the request is successful
         except requests.RequestException as request_exception:
-            print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying.....')
-            if attempt == MAX_RETRIES - 1: 
-                print(f"Error fetching {url} after {MAX_RETRIES} attempts, Error: {request_exception}")
-                return question_counter 
-            continue   
+            print(f'Error occurred for {url}, waiting for {backoff_time * attempt} seconds before retrying...')
+            if attempt == MAX_RETRIES - 1:  # If we've reached the maximum number of retries
+                print(f"Failed to fetch {url} after {MAX_RETRIES} attempts. Error: {request_exception}")
+                return question_counter  # Return the current counter if it fails
+            continue  # Continue retrying
         except Exception as err:
-            print(f'An error occurred: {err}')
-            return
-    else:
-        return
+            print(f"An unexpected error occurred: {err}")
+            return question_counter  # Return the current question counter in case of any other errors
 
-    soup = BeautifulSoup(page.content, 'html.parser')
-    questions = soup.find_all('div', class_='bix-div-container')
+    soup = BeautifulSoup(page.content, 'html.parser')  # Parse the HTML content of the page
+    questions = soup.find_all('div', class_='bix-div-container')  # Find all the question containers
 
     for question in questions:
-        question_dict = {}  # Initialize question_dict here
         try:
+            # Initialize a dictionary to store the processed question data
+            question_dict = {}
+
+            # Extract the question text
             q_text_elem = question.find('div', class_='bix-td-qtxt')
+            question_text = str(q_text_elem).strip() if q_text_elem else 'Question not found.'
+
+            # Extract options and the answer
             options_elems = question.find_all('div', class_='bix-td-option-val')
             answer_elem = question.find('input', class_='jq-hdnakq')
+            answer = answer_elem['value'].upper() if answer_elem else 'Answer not found.'
 
+            # Validate the answer
+            if answer not in ['A', 'B', 'C', 'D']:
+                raise ValueError('Invalid answer format.')
+
+            answer = f"Option {answer}" if answer != 'Answer not found.' else answer
+
+            # Handle explanation and discussion link
             explanation_elem = question.find('div', class_='bix-ans-description')
             discussion_link_elem = question.find('a', class_='discuss')
-
             explanation = str(explanation_elem).strip() if explanation_elem else 'Explanation not found.'
             discussion_link = discussion_link_elem['href'] if discussion_link_elem else 'Discussion link not found.'
 
-            question_text = str(q_text_elem).strip() if q_text_elem else 'Question not found.'
-            # Process the question text to replace <span class="root"> tags
-            root_span_in_question = re.search('<span class="root">(.*?)</span>', question_text)
-            if root_span_in_question:
-                question_text = re.sub(root_span_in_question.group(), f'√({root_span_in_question.group(1).strip()})', question_text)
+            # Image handling logic
+            img_count = {'within': 1, 'after': 1, 'explanation': 1}
+            img_elems = q_text_elem.find_all('img') if q_text_elem else []
 
-            answer = answer_elem['value'].upper() if answer_elem else 'Answer not found.'
-            if answer not in ['A', 'B', 'C', 'D']:
-                raise ValueError('Invalid answer.')
-            answer = f"Option {answer}" if answer != 'Answer not found.' else answer
-
-            img_count = {'within': 1, 'after': 1, 'explanation': 1}         
-            img_elems = q_text_elem.find_all('img')
-
+            # Process images within the question text
             for img_elem in img_elems:
                 img_url = urljoin(url, img_elem['src'])
                 img_data = str(img_elem.previous) if img_elem.previous else ""
                 img_data = re.sub(r'\s+', '', img_data)
 
+                # Determine if the image is 'within' or 'after' based on HTML structure
                 name_type = 'after' if '<br/>' in img_data else 'within'
-                placeholder = f'(image)q{question_counter}_{name_type}_{img_count[name_type]}(image)'
+                placeholder = f'(image)q{question_counter}_{quiz_set_id}_{name_type}_{img_count[name_type]}(image)'  # Include quiz_set_id in image name
                 question_text = question_text.replace(str(img_elem), placeholder)
 
-                name = f'q{question_counter}_{name_type}_{img_count[name_type]}.png'
+                # Define the name and folder path for the image
+                name = f'q{question_counter}_{quiz_set_id}_{name_type}_{img_count[name_type]}.png'
                 folder_path = img_type_directory[name_type]
 
-                download_image(img_url, folder_path, name)  
+                # Download the image
+                download_image(img_url, folder_path, name)
                 img_count[name_type] += 1
 
-            img_elems = explanation_elem.find_all('img')
+            # Process explanation images, if present
+            if explanation_elem:
+                img_elems = explanation_elem.find_all('img')
+                for img_elem in img_elems:
+                    img_url = urljoin(url, img_elem['src'])
+                    name = f'q{question_counter}_{quiz_set_id}_explanation_{img_count["explanation"]}.png'
+                    folder_path = img_type_directory['explanation']
 
-            for img_elem in img_elems:
-                img_url = urljoin(url, img_elem['src'])
-                name = f'q{question_counter}_explanation_{img_count["explanation"]}.png'
-                folder_path = img_type_directory['explanation']
+                    placeholder = f'(image)q{question_counter}_{quiz_set_id}_explanation_{img_count["explanation"]}(image)'
+                    explanation = explanation.replace(str(img_elem), placeholder)
 
-                placeholder = f'(image)q{question_counter}_explanation_{img_count["explanation"]}(image)'
-                explanation = explanation.replace(str(img_elem), placeholder)
-                
-                download_image(img_url, folder_path, name)
-                img_count["explanation"] += 1
+                    # Download explanation image
+                    download_image(img_url, folder_path, name)
+                    img_count["explanation"] += 1
 
+            # Process options and their images
             options_processed = []
             for i, option_elem in enumerate(options_elems):
                 flex_wrap_div = option_elem.find('div', class_='flex-wrap')
                 if flex_wrap_div:
+                    # Handle images in the options
                     img_options = flex_wrap_div.find_all('img')
                     option_img_count = 1
 
                     for img_option in img_options:
                         img_url = urljoin(url, img_option['src'])
-                        option_name = chr(ord('A') + i)
-                        name = f'q{question_counter}_option{option_name}_{option_img_count}.png'
+                        option_name = chr(ord('A') + i)  # Option A, B, C, etc.
+                        name = f'q{question_counter}_{quiz_set_id}_option{option_name}_{option_img_count}.png'
                         folder_path = img_type_directory["option"]
 
-                        placeholder = f'<img src="/static/assets/images/background/Option/{name}" alt="{name}" style="display: inline-block; width: auto; height: auto;">'
+                        placeholder = f'<img src="/assets/images/background/Option/{name}" alt="{name}" style="display: inline-block; width: auto; height: auto;">'
                         flex_wrap_div = BeautifulSoup(flex_wrap_div.decode().replace(str(img_option), placeholder), 'html.parser')
 
+                        # Download option image
                         download_image(img_url, folder_path, name)
                         option_img_count += 1
 
-                    option_text = flex_wrap_div.decode_contents().strip()
+                    option_text = flex_wrap_div.decode_contents().strip()  # Processed option text
                 else:
-                    option_text = option_elem.text.strip()
+                    option_text = option_elem.text.strip()  # Plain text option
 
                 # Process each option text to replace <span class="root"> tags
                 root_span_in_option = re.search('<span class="root">(.*?)</span>', option_text)
                 if root_span_in_option:
                     option_text = re.sub(root_span_in_option.group(), f'√({root_span_in_option.group(1).strip()})', option_text)
 
-                options_processed.append(option_text)
+                options_processed.append(option_text)  # Add the processed option to the list
 
+            # Fetch and process discussion comments if the link is valid
             if discussion_link != 'Discussion link not found.':
                 discussion_comments = fetch_discussion_comments(discussion_link)
-                print(f"Discussion Comments for Question {question_counter}: {discussion_comments}")  # Debugging
                 question_dict['discussion_comments'] = discussion_comments
             else:
                 question_dict['discussion_comments'] = ''
 
+            # Log the processed question details
             print(f"Processed Question {question_counter}:")
             print(f"Text: {question_text}")
             print("Options: \n{}".format('\n'.join(options_processed)))
@@ -223,6 +245,7 @@ def process_question(base_url, url_number, question_counter, quiz_set_id):
             print(f"Image Placeholder: {placeholder if img_elems else 'No Image'}")
             print("----------------------------------------------------")
 
+            # Prepare the question dictionary to store in the database
             question_dict = {
                 'text': question_text,
                 'options': options_processed,
@@ -230,69 +253,82 @@ def process_question(base_url, url_number, question_counter, quiz_set_id):
                 'url': url,
                 'explanation': explanation,
                 'discussion_link': discussion_link,
-                'discussion_comments': question_dict['discussion_comments']
+                'discussion_comments': question_dict.get('discussion_comments', '')
             }
 
-            if question_dict:
-                new_question = Question(
-                    text=question_dict['text'],
-                    options=question_dict['options'],
-                    answer=question_dict['answer'],
-                    url=question_dict['url'],
-                    explanation=question_dict['explanation'],
-                    discussion_link=question_dict['discussion_link'],
-                    discussion_comments=question_dict['discussion_comments'],
-                    quiz_set_id=quiz_set_id
-                )
-                db.session.add(new_question)
-            
+            # Store the question in the database
+            new_question = Question(
+                text=question_dict['text'],
+                options=question_dict['options'],
+                answer=question_dict['answer'],
+                url=question_dict['url'],
+                explanation=question_dict['explanation'],
+                discussion_link=question_dict['discussion_link'],
+                discussion_comments=question_dict.get('discussion_comments', ''),
+                quiz_set_id=quiz_set_id,
+                order=question_counter  # Set the order field
+            )
+            db.session.add(new_question)
+
+            # Increment the global question counter
             question_counter += 1
 
         except Exception as e:
             print(f"Error occurred while processing question: {e}")
 
+    # Commit changes to the database
     db.session.commit()
 
+    # Return the updated question counter
     return question_counter
 
 def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
+    # Ensure the URL starts with https://
     if not url.startswith('https://'):
         url = 'https://' + url
-    
+
     MAX_RETRIES = 10
     backoff_time = 3
 
     for attempt in range(MAX_RETRIES):
         try:
             time.sleep(backoff_time * attempt)
+            # Send the HTTP request to get the content of the Pinoybix page
             response = requests.get(url, headers={'User-Agent': choice(config.headers_list)}, verify=False)
             response.raise_for_status()
-            
+
             soup = BeautifulSoup(response.content, 'html.parser')
 
             folder_path = 'PinoybixAfter'
-            if not os.path.exists('./static/assets/images/background/' + folder_path):
-                os.makedirs('./static/assets/images/background/' + folder_path)
+            if not os.path.exists(f'assets/images/background/{folder_path}'):
+                os.makedirs(f'assets/images/background/{folder_path}')
 
+            # Iterate over all paragraphs and look for the question pattern
             paragraphs = soup.find_all('p')
             for p in paragraphs:
+                # Skip instructional text
                 if 'Choose the letter of the best answer in each questions.' in p.get_text():
                     continue
 
+                # Look for the question pattern (e.g., "1.")
                 que_match = re.match(r'^(\d+)\.', p.text)
                 if que_match:
+                    # Ignore the question number from the webpage
+                    # Use your own question_counter
+
                     question_html = str(p)
-                    question_html = re.sub(r'^<p>\d+\.', '<p>', question_html)
+                    question_html = re.sub(r'^<p>\d+\.', '<p>', question_html)  # Remove question number from HTML
 
                     soup_question = BeautifulSoup(question_html, 'html.parser')
                     for img_tag in soup_question.find_all(['img', 'a']):
-                        img_tag.decompose()
+                        img_tag.decompose()  # Remove any image or link tags in the question
                     question_text = str(soup_question)
 
                     choices = []
                     key_answer = ''
                     placeholder = 'No Image'
 
+                    # Look for an image in the current or next paragraph
                     img_tag = p.find('img')
                     if not img_tag:
                         next_p = p.find_next_sibling('p')
@@ -300,12 +336,14 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
 
                     if img_tag and 'src' in img_tag.attrs:
                         img_url = img_tag['src']
-                        name = f'pinoybix_q{question_counter}_after_1.png'
+                        # Use your own question_counter in the image filename
+                        name = f'pinoybix_q{question_counter}_{quiz_set_id}_after_1.png'
                         download_success = download_image(img_url, folder_path, name)
                         if download_success:
-                            placeholder = f'<br/>(image)pinoybix_q{question_counter}_after_1(image)'
+                            placeholder = f'<br/>(image)pinoybix_q{question_counter}_{quiz_set_id}_after_1(image)'
                             question_text += placeholder
 
+                    # Process the choices and find the answer
                     next_p = p.find_next_sibling()
                     while next_p:
                         if next_p.name == 'p':
@@ -321,6 +359,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                                         key_answer = 'Option ' + answer_match.group(1)
                                     break
                         elif next_p.name == 'div' and 'wp_shortcodes_toggle' in next_p.get('class', []):
+                            # Look for the answer in a toggle section if available
                             answer_div = next_p.find('div', class_='togglec clearfix')
                             if answer_div:
                                 answer_match = re.search(r'Option ([A-D])', answer_div.get_text())
@@ -329,6 +368,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                             break
                         next_p = next_p.find_next_sibling()
 
+                    # Log the processed question details for debugging
                     print(f"Processed Question {question_counter}:")
                     print(f"Text: {question_text}")
                     print(f"Options: {choices}")
@@ -336,6 +376,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                     print(f"Image Placeholder: {placeholder}")
                     print("----------------------------------------------------")
 
+                    # Create a new question entry and add it to the database
                     new_question = Question(
                         text=question_text,
                         options=choices,
@@ -343,23 +384,25 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                         quiz_set_id=quiz_set_id,
                         url=url,
                         explanation="No explanation available",
-                        discussion_link="No discussion link available"
+                        discussion_link="No discussion link available",
+                        order=question_counter  # Set the order field
                     )
                     db.session.add(new_question)
-                    question_counter += 1
+                    question_counter += 1  # Increment the global counter here
 
+            # Commit the changes to the database
             db.session.commit()
-            return question_counter
+            return question_counter  # Return the updated question_counter
 
         except requests.RequestException as request_exception:
             print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying.....')
-            if attempt == MAX_RETRIES - 1: 
+            if attempt == MAX_RETRIES - 1:
                 print(f"Error fetching {url} after {MAX_RETRIES} attempts, Error: {request_exception}")
-                return question_counter
+                return question_counter  # Return the current question_counter even on failure
             continue
         except Exception as err:
             print(f'An error occurred: {err}')
-            return question_counter
+            return question_counter  # Return the current question_counter in case of any other errors
 
 def process_examveda_question(base_url, start_page, end_page, question_counter, quiz_set_id, db, Question):
     if not base_url.startswith('https://'):
@@ -368,9 +411,9 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
     MAX_RETRIES = 10
     backoff_time = 3
 
-    for page_num in range(start_page, end_page + 1):
-        # Adjusting the URL to accommodate the new format with &page=
-        url = f"{base_url}&page={page_num}"
+    # Process each page in the specified range (start_page to end_page)
+    for page_num in range(int(start_page), int(end_page) + 1):
+        url = f"{base_url}?page={page_num}"  # Adjust URL to include the page number
 
         for attempt in range(MAX_RETRIES):
             try:
@@ -381,29 +424,33 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
                 soup = BeautifulSoup(response.content, 'html.parser')
                 questions = soup.find_all('article', class_='question')
 
+                # Ensure that questions are processed in the same order they appear on the page
                 for question in questions:
                     q_text_elem = question.find('div', class_='question-main')
                     if not q_text_elem:
                         continue
 
                     question_html = str(q_text_elem)
-                    question_html = re.sub(r'\$\s+', r'$ ', question_html)
+                    question_html = re.sub(r'\$\s+', r'$ ', question_html)  # Handle special characters
                     question_html = re.sub(r'\$\$(.*?)\$\$', r'<span class="mathjax">\1</span>', question_html)
                     img_elems = q_text_elem.find_all('img')
 
+                    # Handle main question images
                     for img_elem in img_elems:
                         img_url = urljoin(url, img_elem['src'])
                         img_extension = os.path.splitext(img_url)[1]
-                        placeholder = f'(image)examveda_q{question_counter}_main(image)'
+                        placeholder = f'(image)examveda_q{question_counter}_{quiz_set_id}_main(image)'
                         question_html = question_html.replace(str(img_elem), placeholder)
 
                         folder_path = 'ExamvedaMain'
-                        if not os.path.exists('./static/assets/images/background/' + folder_path):
-                            os.makedirs('./static/assets/images/background/' + folder_path)
+                        # Correct path without public
+                        if not os.path.exists(f'assets/images/background/{folder_path}'):
+                            os.makedirs(f'assets/images/background/{folder_path}')
 
-                        img_name = f'examveda_q{question_counter}_main{img_extension}'
+                        img_name = f'examveda_q{question_counter}_{quiz_set_id}_main{img_extension}'
                         download_image(img_url, folder_path, img_name)
 
+                    # Extract options and explanation
                     options_html = []
                     option_blocks = question.find_all('p')
                     for block in option_blocks:
@@ -420,15 +467,17 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
                     discussion_link_elem = question.find('a', text='Discuss in Board')
                     discussion_link = discussion_link_elem['href'] if discussion_link_elem else 'Discussion link not found.'
 
+                    # Log processed question details
                     print(f"Processed Question {question_counter}:")
                     print(f"Text: {question_html}")
-                    print("Options: \n{}".format('\n'.join(options_html)))
+                    print(f"Options: \n{options_html}")
                     print(f"Answer: {answer}")
                     print(f"URL: {url}")
                     print(f"Explanation: {explanation}")
                     print(f"Discussion Link: {discussion_link}")
                     print("----------------------------------------------------")
 
+                    # Store question in the database
                     new_question = Question(
                         text=question_html,
                         options=options_html,
@@ -436,24 +485,26 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
                         explanation=explanation,
                         url=url,
                         discussion_link=discussion_link,
-                        quiz_set_id=quiz_set_id
+                        quiz_set_id=quiz_set_id,
+                        order=question_counter  # Set the order field
                     )
                     db.session.add(new_question)
-                    question_counter += 1
 
-                db.session.commit()
-                break
+                    question_counter += 1  # Ensure the question counter increments sequentially
+
+                db.session.commit()  # Commit after processing each page
+                break  # Break retry loop if successful
 
             except requests.RequestException as request_exception:
-                print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying.....')
-                if attempt == MAX_RETRIES - 1: 
+                print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying...')
+                if attempt == MAX_RETRIES - 1:
                     print(f"Error fetching {url} after {MAX_RETRIES} attempts, Error: {request_exception}")
                 continue
             except Exception as e:
                 print(f"Error occurred while processing page {page_num}: {e}")
                 break
 
-    return question_counter
+    return question_counter  # Return the updated question counter
 
 def process_examprimer_question(url, question_counter, quiz_set_id, db, Question):
     if not url.startswith('https://'):

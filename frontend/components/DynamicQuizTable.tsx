@@ -9,8 +9,7 @@ import {
 import { AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Button } from '@chakra-ui/react';
 import { OpenInNewWindowIcon, Pencil2Icon, TrashIcon, LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import UrlsModal from '../components/UrlsModal';
-
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
 interface QuizSet {
     id: string;
@@ -46,6 +45,7 @@ const DynamicQuizTable = () => {
   const [deleteQuizSetId, setDeleteQuizSetId] = useState<string | null>(null);
   const cancelRef = React.useRef<HTMLButtonElement>(null);
   const [isLocked, setIsLocked] = useState(true);
+  const backendUrl = getBackendUrl();
   
   // Fetch quiz sets data
   const fetchQuizSets = async () => {

@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Button, Textarea, Flex, useToast } from '@chakra-ui/react';
-
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
 interface ScrapingSectionProps {
   onScrapeComplete: (success: boolean, quizSetTitle: string) => void;
@@ -14,6 +13,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
   const [scrapeInput, setScrapeInput] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const toast = useToast();
+  const backendUrl = getBackendUrl();
 
   const handleScrape = async () => {
     if (!quizSetTitle.trim()) {
@@ -28,7 +28,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
       });
       return;
     }
-
+  
     console.log('Starting the scraping process...');
     const processingToastId = toast({
       title: 'Processing...',
@@ -38,52 +38,54 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
       isClosable: true,
       position: 'bottom-right',
     });
-
+  
     setIsScraping(true);
-
+  
     const lines = scrapeInput.split('\n');
-    let urls = lines.map(line => {
-      console.log("Processing line:", line);
-      line = line.trim();
-      if (!line) return null;
-
-      // Support for both specified formats
-      if (line.includes("examveda")) {
-        if (line.includes(',')) { // Format with start and end page
-          const parts = line.split(/\s*,\s*/);
-          const base_url = parts[0];
-          const pageParts = parts.slice(1).map(part => {
-            const [key, value] = part.split('=');
-            return { [key.trim()]: value.trim() };
-          }).reduce((acc, curr) => ({ ...acc, ...curr }), {});
-          return { base_url, ...pageParts };
-        } else { // Direct single URL without comma separation
-          return { base_url: line };
+    let urls = lines
+      .map(line => {
+        console.log("Processing line:", line);
+        line = line.trim();
+        if (!line) return null;
+  
+        // Examveda URL input format: base_url, ?page=1, ?page=10
+        if (line.includes("examveda")) {
+          const [base_url, start_page_str, end_page_str] = line.split(',').map(s => s.trim());
+          
+          // Extract start_page and end_page
+          const start_page = start_page_str ? start_page_str.split('=')[1] : '1';
+          const end_page = end_page_str ? end_page_str.split('=')[1] : start_page;
+  
+          // Ensure the format is correct for sending to backend
+          return { base_url, start_page, end_page };
+        } 
+        
+        // Handle other platforms
+        else if (line.includes("sanfoundry.com") || line.includes("pinoybix") || line.includes("web.archive.org")) {
+          return { base_url: line }; // Single URL handling
+        } else {
+          const [base_url, start_url, end_url] = line.split(',').map(s => s.trim());
+          return { base_url, start_url, end_url }; // Indiabix format
         }
-      } else if (line.includes("sanfoundry.com") || line.includes("pinoybix") || line.includes("web.archive.org")) {
-        return line;
-      } else {
-        const [base_url, start_url, end_url] = line.split(',').map(s => s.trim());
-        return { base_url, start_url, end_url };
-      }
-    }).filter(line => line);
-
+      })
+      .filter(line => line); // Remove null or empty lines
+  
     console.log("Final URLs sent to Backend:", JSON.stringify(urls, null, 2));
-
+  
     try {
       const response = await fetch(`${backendUrl}/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: quizSetTitle, urls }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-
+  
       const data = await response.json();
       console.log('Scraping completed successfully:', data);
-
+  
       onScrapeComplete(true, quizSetTitle);
       toast({
         title: "Scraping Completed",
@@ -114,13 +116,13 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
   // Function to download the quiz set as a PDF
   const downloadQuizPdf = async (quizSetId: string) => {
     try {
-      console.log(`Downloading PDF for quiz set ID: ${quizSetId}`);
-      const response = await fetch(`${backendUrl}/downloadQuizPdf/${quizSetId}`);
+      console.log(`Downloading PDF for quiz set ID: ${quizSetId}`); // Corrected string interpolation
+      const response = await fetch(`${backendUrl}/downloadQuizPdf/${quizSetId}`); // Corrected string interpolation
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `${quizSetTitle}.pdf`;
+      link.download = `${quizSetTitle}.pdf`; // Corrected string interpolation
       document.body.appendChild(link);
       link.click();
       link.remove();

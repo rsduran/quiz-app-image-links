@@ -7,8 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { RocketIcon, ExternalLinkIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { MathJax } from "better-react-mathjax";
-
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
 type AdditionalInfoProps = {
   url: string;
@@ -20,6 +19,7 @@ type AdditionalInfoProps = {
     options: string[];
     answer: string;
   };
+  quizSetId: string;
 };
 
 type CommentType = {
@@ -28,7 +28,7 @@ type CommentType = {
   commentText: string;
 };
 
-const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questionDetails }: AdditionalInfoProps) => {
+const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questionDetails, quizSetId }: AdditionalInfoProps) => {
   const [loadingRocket, setLoadingRocket] = useState(false); 
   const [loadingReload, setLoadingReload] = useState(false);
   const [furtherExplanation, setFurtherExplanation] = useState('');
@@ -36,6 +36,7 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
   const [discussionComments, setDiscussionComments] = useState<CommentType[]>([]);
   const { colorMode } = useColorMode();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const backendUrl = getBackendUrl();
 
   const fetchDiscussionComments = async () => {
     try {
@@ -78,13 +79,13 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
     ));
   };
 
-  const processExplanationForImages = (text: string) => {
-    const explanationImagePattern = /\(image\)q(\d+)_explanation_(\d+)\(image\)/gi;
-    return text.replace(explanationImagePattern, (match, p1, p2) => {
-      let imageName = `q${p1}_explanation_${p2}.png`;
-      return `<img src="/static/assets/images/background/Explanation/${imageName}" alt="${imageName}" style="display: inline-block; width: auto; height: auto;">`;
+  const processExplanationForImages = (text: string, quizSetId: string): string => {
+    const explanationImagePattern = /\(image\)q(\d+)_([a-z0-9-]+)_explanation_(\d+)\(image\)/gi;
+    return text.replace(explanationImagePattern, (match, p1, p2, p3) => {
+      let imageName = `q${p1}_${quizSetId}_explanation_${p3}.png`;
+      return `<img src="/assets/images/background/Explanation/${imageName}" alt="${imageName}" style="display: inline-block; width: auto; height: auto;">`;
     });
-  };
+  };   
 
   const formatBotResponse = (response: string) => {
     let formattedResponse = response;
@@ -210,7 +211,7 @@ const AdditionalInfo = ({ url, explanation, discussion_link, question_id, questi
               {loadingRocket ? <Spinner size="xs" /> : <RocketIcon onClick={handleRocketClick} />}
             </Box>
           </Flex>
-          <div dangerouslySetInnerHTML={{ __html: processExplanationForImages(explanation) }} />
+          <div dangerouslySetInnerHTML={{ __html: processExplanationForImages(explanation, quizSetId) }} />
         </Box>
         {furtherExplanation && (
           <Box>

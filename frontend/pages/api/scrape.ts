@@ -1,8 +1,9 @@
 // pages/scrape.ts
 
+import { getBackendUrl } from '@/utils/getBackendUrl';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+const backendUrl = getBackendUrl();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {

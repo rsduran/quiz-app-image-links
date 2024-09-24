@@ -21,8 +21,7 @@ import { ShuffleIcon } from '@radix-ui/react-icons';
 import { Question } from '../../utils/types';
 import LoadingLayout from '../../components/LoadingLayout';
 import { useRouter } from 'next/router';
-
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
 interface QuestionData {
   id: number;
@@ -41,6 +40,7 @@ interface QuestionData {
 type NavigateToQuestionFunction = (index: number) => void;
 
 const QuizModePage = () => {
+  const backendUrl = getBackendUrl();
   const router = useRouter();
   const { id } = router.query;
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -74,23 +74,31 @@ const QuizModePage = () => {
 
   // Utility function to shuffle the options and update the answer.
   const shuffleOptionsAndUpdateAnswer = (questions: Question[]): Question[] => {
-    console.log("Shuffling options for each question"); // Debug log
+    console.log("Shuffling options for each question");
     return questions.map((question) => {
+      console.log('Original question:', question);
+  
       const options = [...question.options];
-      const correctAnswerContent = question.options.find((opt, idx) => `Option ${String.fromCharCode(65 + idx)}` === question.answer);
+      const correctAnswerContent = question.options.find(
+        (opt, idx) => `Option ${String.fromCharCode(65 + idx)}` === question.answer
+      );
   
       shuffleArray(options);
   
       const newCorrectAnswerIndex = options.findIndex(opt => opt === correctAnswerContent);
       const newAnswerLabel = `Option ${String.fromCharCode(65 + newCorrectAnswerIndex)}`;
   
-      return {
+      const updatedQuestion: Question = {
         ...question,
         options,
         answer: newAnswerLabel,
       };
+  
+      console.log('Updated question:', updatedQuestion);
+  
+      return updatedQuestion;
     });
-  };
+  };  
 
   // Modify the useEffect hook that fetches and sets questions to reapply option shuffling if optionsShuffled is true
   useEffect(() => {
@@ -99,42 +107,59 @@ const QuizModePage = () => {
         const response = await fetch(`${backendUrl}/getQuestionsByQuizSet/${id}`);
         if (!response.ok) throw new Error('Network response was not ok');
         let data = await response.json();
-
+  
+        console.log('Fetched data:', data);
+  
+        // Map data to Question[]
+        let mappedQuestions: Question[] = data.map((q: QuestionData) => ({
+          id: q.id,
+          order: q.order,
+          question: q.text,
+          options: q.options,
+          answer: q.answer,
+          url: q.url,
+          explanation: q.explanation,
+          discussion_link: q.discussion_link,
+          hasMathContent: q.hasMathContent,
+          userSelectedOption: null,
+        }));
+  
+        // Sort questions by 'order' field
+        mappedQuestions.sort((a: Question, b: Question) => a.order - b.order);
+  
         // Reapply option shuffle if optionsShuffled is true
         if (optionsShuffled) {
-          data = shuffleOptionsAndUpdateAnswer(data);
+          mappedQuestions = shuffleOptionsAndUpdateAnswer(mappedQuestions);
         }
-
-        setQuestions(data.map((q: QuestionData) => ({
-          ...q,
-          question: q.text,
-          userSelectedOption: null
-        })));
+  
+        setQuestions(mappedQuestions);
+  
+        console.log('Questions after mapping:', mappedQuestions);
       } catch (error) {
         console.error('Error fetching questions:', error);
       }
     };
-
+  
     if (id) {
       fetchQuestions();
     }
-  }, [id, optionsShuffled]); // Add optionsShuffled as a dependency
+  }, [id, optionsShuffled]);     
 
   // Adjusted to better manage state updates and debugging
   const handleToggleShuffleOptions = () => {
     console.log("Toggling shuffle options from", optionsShuffled);
-
+  
     // Immediately set the optionsShuffled state to its new value
     const newOptionsShuffledState = !optionsShuffled;
     setOptionsShuffled(newOptionsShuffledState);
-
+  
     // Debug log to confirm state change
     console.log("Options shuffled state changed to", newOptionsShuffledState);
-
+  
     // If the questions have been shuffled, reapply options shuffle directly
     if (preserveShuffleState.questionsShuffled) {
       console.log("Reapplying options shuffle to already shuffled questions");
-      setQuestions(currentQuestions => {
+      setQuestions((currentQuestions) => {
         const newQuestions = shuffleOptionsAndUpdateAnswer([...currentQuestions]);
         console.log("Questions after reapplying option shuffle", newQuestions);
         return newQuestions;
@@ -142,13 +167,13 @@ const QuizModePage = () => {
     } else {
       console.log("Options shuffle toggled, but questions not shuffled yet.");
     }
-
+  
     // Update the preserveShuffleState to reflect the new optionsShuffled state
-    setPreserveShuffleState(prevState => ({
+    setPreserveShuffleState((prevState) => ({
       ...prevState,
-      optionsShuffled: newOptionsShuffledState
+      optionsShuffled: newOptionsShuffledState,
     }));
-  };
+  };  
 
   const confirmShuffleQuestions = async () => {
     console.log("Confirming shuffle questions...");
@@ -156,42 +181,51 @@ const QuizModePage = () => {
       console.log("Before fetching shuffled questions");
       const shuffledResponse = await fetch(`${backendUrl}/shuffleQuestions/${id}`, { method: 'POST' });
       if (!shuffledResponse.ok) throw new Error('Error shuffling questions');
-      
-      let shuffledQuestions = await shuffledResponse.json();
-      console.log("Shuffled questions received:", shuffledQuestions);
-      
+  
+      let shuffledQuestionsData = await shuffledResponse.json();
+      console.log("Shuffled questions received:", shuffledQuestionsData);
+  
+      // Map to Question[]
+      let shuffledQuestions: Question[] = shuffledQuestionsData.map((q: QuestionData) => ({
+        id: q.id,
+        order: q.order,
+        question: q.text,
+        options: q.options,
+        answer: q.answer,
+        url: q.url,
+        explanation: q.explanation,
+        discussion_link: q.discussion_link,
+        hasMathContent: q.hasMathContent,
+        userSelectedOption: null,
+      }));
+  
       // Reapply options shuffle if optionsShuffled is true
       if (optionsShuffled) {
         console.log("Reapplying options shuffle after questions shuffle");
         shuffledQuestions = shuffleOptionsAndUpdateAnswer(shuffledQuestions);
       }
-    
+  
       console.log("Setting preserve shuffle state");
-      // Directly update state to reflect both shuffles
       setPreserveShuffleState({
         questionsShuffled: true,
-        optionsShuffled
+        optionsShuffled,
       });
-      
-      // Update the questions state with potentially double-shuffled questions
-      setQuestions(shuffledQuestions.map((q: QuestionData) => ({
-        ...q,
-        question: q.text,
-        userSelectedOption: null
-      })));
+  
+      // Update the questions state with shuffled questions
+      setQuestions(shuffledQuestions);
       console.log("Questions state updated after shuffle");
-    
+  
       console.log("Resetting current question index to 0");
       setCurrentQuestionIndex(0);
       onConfirmationModalClose();
-    
+  
       toast({
         title: "Questions Shuffled",
         description: "Questions have been shuffled.",
         status: "info",
         duration: 3000,
         isClosable: true,
-        position: "bottom-right"
+        position: "bottom-right",
       });
     } catch (error) {
       console.error('Error shuffling questions:', error);
@@ -221,10 +255,14 @@ const QuizModePage = () => {
     try {
       const response = await fetch(`${backendUrl}/getQuestionsByQuizSet/${id}`);
       if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      let data = await response.json();
+  
       console.log("Fetched Questions Data:", data);
-      setQuestions(data.map((q: QuestionData) => ({
+  
+      // Map data to Question[]
+      let mappedQuestions: Question[] = data.map((q: QuestionData) => ({
         id: q.id,
+        order: q.order,
         question: q.text,
         options: q.options,
         answer: q.answer,
@@ -232,13 +270,18 @@ const QuizModePage = () => {
         explanation: q.explanation,
         discussion_link: q.discussion_link,
         hasMathContent: q.hasMathContent,
-        userSelectedOption: null
-      })));
+        userSelectedOption: null,
+      }));
+  
+      // Sort questions by 'order' field
+      mappedQuestions.sort((a: Question, b: Question) => a.order - b.order);
+  
+      setQuestions(mappedQuestions);
       await fetchUserSelections();
     } catch (error) {
       console.error('Error fetching questions:', error);
     }
-  };  
+  };    
 
   const fetchEyeIconState = async () => {
     const response = await fetch(`${backendUrl}/getEyeIconState/${id}`);  // Use quiz set ID
@@ -416,6 +459,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
 
   const defaultQuestion: Question = {
     id: 0,
+    order: 0,  // Add this line
     question: "Question",
     options: ["A. Option A", "B. Option B", "C. Option C", "D. Option D"],
     answer: "Correct Answer",
@@ -424,7 +468,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
     discussion_link: "Placeholder Discussion Link",
     userSelectedOption: null,
     hasMathContent: false,
-  };  
+  };      
 
   const isQuestionAvailable = currentQuestionIndex < filteredQuestions.length;
   const displayedQuestion = isQuestionAvailable ? filteredQuestions[currentQuestionIndex] : defaultQuestion;
@@ -506,42 +550,49 @@ const updateScore = async (questionId: number, scoreChange: number) => {
   useEffect(() => {
     let filtered;
     switch (selectedFilter) {
-        case 'favorites':
-            filtered = questions.filter(question => favorites.has(question.id));
-            break;
-        case 'answered':
-            filtered = questions.filter(q => q.userSelectedOption !== null);
-            break;
-        case 'unanswered':
-            filtered = questions.filter(q => q.userSelectedOption === null);
-            break;
-        case 'incorrect':
-            filtered = questions.filter(q => q.userSelectedOption !== q.answer);
-            break;
-        default:
-            filtered = [...questions];
+      case 'favorites':
+        filtered = questions.filter(question => favorites.has(question.id));
+        break;
+      case 'answered':
+        filtered = questions.filter(q => q.userSelectedOption !== null);
+        break;
+      case 'unanswered':
+        filtered = questions.filter(q => q.userSelectedOption === null);
+        break;
+      case 'incorrect':
+        filtered = questions.filter(q => q.userSelectedOption !== q.answer);
+        break;
+      default:
+        filtered = [...questions];
     }
+    // Sort the filtered questions by 'order' field
+    filtered.sort((a: Question, b: Question) => a.order - b.order);
     setFilteredQuestions(filtered);
-  }, [questions, favorites, selectedFilter]);
+  }, [questions, favorites, selectedFilter]);  
 
   const getQuestionIndex = (questionId: number, filter: string) => {
     let list;
     switch (filter) {
-        case 'favorites':
-            list = questions.filter(q => favorites.has(q.id));
-            break;
-        case 'answered':
-            list = questions.filter(q => q.userSelectedOption !== null);
-            break;
-        case 'unanswered':
-            list = questions.filter(q => q.userSelectedOption === null);
-            break;
-        default:
-            list = questions;
+      case 'favorites':
+        list = questions.filter(q => favorites.has(q.id));
+        break;
+      case 'answered':
+        list = questions.filter(q => q.userSelectedOption !== null);
+        break;
+      case 'unanswered':
+        list = questions.filter(q => q.userSelectedOption === null);
+        break;
+      case 'incorrect':
+        list = questions.filter(q => q.userSelectedOption !== q.answer);
+        break;
+      default:
+        list = [...questions];
     }
-    // Find the index in the filtered list and return it as is (zero-based)
+    // Sort the list by 'order' field
+    list.sort((a: Question, b: Question) => a.order - b.order);
+    // Find the index in the filtered list
     return list.findIndex(q => q.id === questionId);
-  };
+  };  
 
   const handleReset = async () => {
     console.log("Initiating reset");
@@ -774,6 +825,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
           cardBgColor={cardBgColor}
           cardTextColor={cardTextColor}
           unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
+          quizSetId={id as string}  // Pass quizSetId here
         />
 
         {/* Conditional rendering for Flip Card and Additional Info */}
@@ -804,6 +856,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
                     options: displayedQuestion.options,
                     answer: displayedQuestion.answer,
                   }}
+                  quizSetId={id as string}  // Pass quizSetId here
                 />
 
                 <Divider my={4} />

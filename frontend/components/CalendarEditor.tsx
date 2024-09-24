@@ -7,8 +7,9 @@ import { Calendar } from '@/components/ui/calendar';
 
 import 'react-quill/dist/quill.snow.css';
 import './custom-quill.css'; 
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api';
+const backendUrl = getBackendUrl();
 
 const QuillNoSSRWrapper = dynamic(() => import('react-quill'), {
   ssr: false,

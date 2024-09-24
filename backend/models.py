@@ -21,7 +21,7 @@ class Question(db.Model):
     explanation = db.Column(db.Text)
     discussion_link = db.Column(db.String(255))
     user_selected_option = db.Column(db.String(10), nullable=True)
-    order = db.Column(db.Integer, nullable=False, default=0)
+    order = db.Column(db.Integer, nullable=False)  # Ensure this field is not nullable
     further_explanation = db.relationship('FurtherExplanation', backref='question', lazy=True)
     discussion_comments = db.Column(db.Text)
 
