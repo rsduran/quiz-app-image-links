@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, Flex, useColorMode } from '@chakra-ui/react';
-import { Calendar } from '@/components/ui/calendar'; 
+import { Box, Flex, useColorMode, useBreakpointValue } from '@chakra-ui/react';
+import { Calendar } from '@/components/ui/calendar';
 
 import 'react-quill/dist/quill.snow.css';
-import './custom-quill.css'; 
+import './custom-quill.css';
 import { getBackendUrl } from '@/utils/getBackendUrl';
 
 const backendUrl = getBackendUrl();
@@ -21,7 +21,12 @@ const modules = {
     [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    [
+      { list: 'ordered' },
+      { list: 'bullet' },
+      { indent: '-1' },
+      { indent: '+1' },
+    ],
     ['link', 'image', 'video'],
     ['clean'],
   ],
@@ -29,8 +34,20 @@ const modules = {
 };
 
 const formats = [
-  'header', 'font', 'size', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent', 'link', 'image', 'video'
+  'header',
+  'font',
+  'size',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'blockquote',
+  'list',
+  'bullet',
+  'indent',
+  'link',
+  'image',
+  'video',
 ];
 
 const CalendarEditor = () => {
@@ -49,14 +66,15 @@ const CalendarEditor = () => {
 
   const fetchEditorContent = () => {
     fetch(`${backendUrl}/getEditorContent`)
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         setEditorContent(data.content);
         localStorage.setItem('editorContent', data.content);
       })
-      .catch(error => console.error('Error fetching editor content:', error));
+      .catch((error) => console.error('Error fetching editor content:', error));
   };
 
+  // Define handleEditorChange function
   const handleEditorChange = (content: string) => {
     setEditorContent(content);
     localStorage.setItem('editorContent', content);
@@ -65,12 +83,26 @@ const CalendarEditor = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
-    }).catch(error => console.error('Error saving editor content:', error));
+    }).catch((error) => console.error('Error saving editor content:', error));
   };
 
+  // Determine flex direction based on screen size
+  const flexDirection = useBreakpointValue<'column' | 'row'>({
+    base: 'column',
+    md: 'row',
+  }) || 'column';
+  const calendarWidth = useBreakpointValue({ base: '100%', md: 'auto' });
+  const editorHeight = useBreakpointValue({ base: '200px', md: '306.5px' });
+
   return (
-    <Flex width="80%" mx="auto" mt={5} justify="space-between">
-      <Box flexShrink={0}>
+    <Flex
+      width={['95%', '90%', '80%']}
+      mx="auto"
+      mt={[5, 10]}
+      justify="space-between"
+      flexDirection={flexDirection}
+    >
+      <Box flexShrink={0} width={calendarWidth} mb={[4, 0]}>
         <Calendar
           mode="single"
           selected={date}
@@ -78,7 +110,7 @@ const CalendarEditor = () => {
           className="rounded-md border"
         />
       </Box>
-      <Box flexGrow={1} ml={4}>
+      <Box flexGrow={1} ml={[0, 4]} width="100%">
         <QuillNoSSRWrapper
           theme="snow"
           value={editorContent}
@@ -86,7 +118,7 @@ const CalendarEditor = () => {
           modules={modules}
           formats={formats}
           placeholder="Put your study plan here."
-          style={{ height: '306.5px', overflowY: 'auto' }}
+          style={{ height: editorHeight, overflowY: 'auto' }}
           className={colorMode === 'dark' ? 'quill-dark-mode' : ''}
         />
       </Box>

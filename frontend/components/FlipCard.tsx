@@ -8,9 +8,16 @@ interface FlipCardProps {
   onClick: () => void;
   frontContent: React.ReactNode;
   backContent: React.ReactNode;
+  bgColor?: string;
 }
 
-const FlipCard: React.FC<FlipCardProps> = ({ isFlipped, onClick, frontContent, backContent }) => {
+const FlipCard: React.FC<FlipCardProps> = ({
+  isFlipped,
+  onClick,
+  frontContent,
+  backContent,
+  bgColor,
+}) => {
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onClick();
@@ -24,12 +31,15 @@ const FlipCard: React.FC<FlipCardProps> = ({ isFlipped, onClick, frontContent, b
       borderColor="currentColor"
       borderRadius="lg"
       transition="border-color 0.2s"
+      bg={bgColor}
+      p={4}
+      width="100%" // Ensure it fills the parent Box
     >
       <Fade in={!isFlipped}>
-        {!isFlipped && frontContent}
+        {!isFlipped && <Box textAlign="center">{frontContent}</Box>}
       </Fade>
       <Fade in={isFlipped}>
-        {isFlipped && backContent}
+        {isFlipped && <Box textAlign="center">{backContent}</Box>}
       </Fade>
     </Box>
   );

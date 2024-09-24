@@ -3,12 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Button, IconButton, Text, Input,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
-  useDisclosure, useColorMode, useColorModeValue, Divider, Tooltip, useToast
+  useDisclosure, useColorMode, useColorModeValue, Divider, Tooltip, useToast, Switch, Select,
+  Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerContent, DrawerCloseButton,
+  Stack,
 } from '@chakra-ui/react';
-import { ArrowLeftIcon, ArrowRightIcon, MoonIcon, SunIcon } from '@chakra-ui/icons'
-import { Select, Highlight, Switch } from '@chakra-ui/react';
-import { ExitIcon, UpdateIcon, StarIcon, MagnifyingGlassIcon, StarFilledIcon, EyeOpenIcon, EyeNoneIcon } from '@radix-ui/react-icons';
+import {
+  ArrowLeftIcon, ArrowRightIcon, MoonIcon, SunIcon,
+} from '@chakra-ui/icons';
+import {
+  ExitIcon, UpdateIcon, StarIcon, MagnifyingGlassIcon, StarFilledIcon, EyeOpenIcon, EyeNoneIcon, ShuffleIcon, HamburgerMenuIcon,
+} from '@radix-ui/react-icons';
 import QuestionDisplay from '../../components/QuestionDisplay';
 import AdditionalInfo from '../../components/AdditionalInfo';
 import SearchModal from '../../components/SearchModal';
@@ -17,11 +21,11 @@ import SummaryModal from '../../components/SummaryModal';
 import UnansweredQuestionsModal from '../../components/UnansweredQuestionsModal';
 import ResetModal from '../../components/ResetModal';
 import FlipCard from '../../components/FlipCard';
-import { ShuffleIcon } from '@radix-ui/react-icons';
 import { Question } from '../../utils/types';
 import LoadingLayout from '../../components/LoadingLayout';
 import { useRouter } from 'next/router';
 import { getBackendUrl } from '@/utils/getBackendUrl';
+import { useBreakpointValue } from '@chakra-ui/react';
 
 interface QuestionData {
   id: number;
@@ -75,30 +79,31 @@ const QuizModePage = () => {
   // Utility function to shuffle the options and update the answer.
   const shuffleOptionsAndUpdateAnswer = (questions: Question[]): Question[] => {
     console.log("Shuffling options for each question");
-    return questions.map((question) => {
+    return questions.map((question: Question) => {
       console.log('Original question:', question);
-  
-      const options = [...question.options];
+
+      // Create a copy of the options to shuffle
+      const options = question.options.slice();
       const correctAnswerContent = question.options.find(
         (opt, idx) => `Option ${String.fromCharCode(65 + idx)}` === question.answer
       );
-  
+
       shuffleArray(options);
-  
+
       const newCorrectAnswerIndex = options.findIndex(opt => opt === correctAnswerContent);
       const newAnswerLabel = `Option ${String.fromCharCode(65 + newCorrectAnswerIndex)}`;
-  
+
       const updatedQuestion: Question = {
         ...question,
         options,
         answer: newAnswerLabel,
       };
-  
+
       console.log('Updated question:', updatedQuestion);
-  
+
       return updatedQuestion;
     });
-  };  
+  };
 
   // Modify the useEffect hook that fetches and sets questions to reapply option shuffling if optionsShuffled is true
   useEffect(() => {
@@ -107,15 +112,16 @@ const QuizModePage = () => {
         const response = await fetch(`${backendUrl}/getQuestionsByQuizSet/${id}`);
         if (!response.ok) throw new Error('Network response was not ok');
         let data = await response.json();
-  
+
         console.log('Fetched data:', data);
-  
+
         // Map data to Question[]
         let mappedQuestions: Question[] = data.map((q: QuestionData) => ({
           id: q.id,
           order: q.order,
           question: q.text,
-          options: q.options,
+          options: q.options.slice(), // Make a copy of the options array
+          originalOptions: q.options.slice(), // Initialize originalOptions with a copy
           answer: q.answer,
           url: q.url,
           explanation: q.explanation,
@@ -123,27 +129,27 @@ const QuizModePage = () => {
           hasMathContent: q.hasMathContent,
           userSelectedOption: null,
         }));
-  
+
         // Sort questions by 'order' field
         mappedQuestions.sort((a: Question, b: Question) => a.order - b.order);
-  
+
         // Reapply option shuffle if optionsShuffled is true
         if (optionsShuffled) {
           mappedQuestions = shuffleOptionsAndUpdateAnswer(mappedQuestions);
         }
-  
+
         setQuestions(mappedQuestions);
-  
+
         console.log('Questions after mapping:', mappedQuestions);
       } catch (error) {
         console.error('Error fetching questions:', error);
       }
     };
-  
+
     if (id) {
       fetchQuestions();
     }
-  }, [id, optionsShuffled]);     
+  }, [id, optionsShuffled]);
 
   // Adjusted to better manage state updates and debugging
   const handleToggleShuffleOptions = () => {
@@ -156,17 +162,28 @@ const QuizModePage = () => {
     // Debug log to confirm state change
     console.log("Options shuffled state changed to", newOptionsShuffledState);
   
-    // If the questions have been shuffled, reapply options shuffle directly
-    if (preserveShuffleState.questionsShuffled) {
-      console.log("Reapplying options shuffle to already shuffled questions");
-      setQuestions((currentQuestions) => {
-        const newQuestions = shuffleOptionsAndUpdateAnswer([...currentQuestions]);
-        console.log("Questions after reapplying option shuffle", newQuestions);
+    // Update questions with shuffled or unshuffled options
+    setQuestions((currentQuestions) => {
+      // Create a deep copy of the current questions
+      const questionsCopy = JSON.parse(JSON.stringify(currentQuestions));
+  
+      if (newOptionsShuffledState) {
+        // Shuffle options
+        const newQuestions = shuffleOptionsAndUpdateAnswer(questionsCopy);
+        console.log("Questions after shuffling options", newQuestions);
         return newQuestions;
-      });
-    } else {
-      console.log("Options shuffle toggled, but questions not shuffled yet.");
-    }
+      } else {
+        // Restore original options order
+        const newQuestions = questionsCopy.map((question: Question) => {
+          return {
+            ...question,
+            options: question.originalOptions?.slice() || question.options.slice(), // Use a copy of originalOptions if it exists, else fallback to options
+          };
+        });
+        console.log("Questions after restoring original options", newQuestions);
+        return newQuestions;
+      }
+    });
   
     // Update the preserveShuffleState to reflect the new optionsShuffled state
     setPreserveShuffleState((prevState) => ({
@@ -264,7 +281,8 @@ const QuizModePage = () => {
         id: q.id,
         order: q.order,
         question: q.text,
-        options: q.options,
+        options: q.options.slice(), // Make a copy of the options array
+        originalOptions: q.options.slice(), // Initialize originalOptions with a copy
         answer: q.answer,
         url: q.url,
         explanation: q.explanation,
@@ -669,153 +687,362 @@ const updateScore = async (questionId: number, scoreChange: number) => {
     });
   };
 
+  // Determine if we're on a mobile device
+  const isMobile = useBreakpointValue({ base: true, md: false });
+
+  const {
+    isOpen: isDrawerOpen,
+    onOpen: onDrawerOpen,
+    onClose: onDrawerClose,
+  } = useDisclosure();
+
   return (
     <LoadingLayout key={selectedFilter}>
       <Box p={4}>
-      {/* Parent Flex Container */}
-      <Flex justifyContent="space-between" align="center" mb={4}>
-        
-        {/* Left Part with back and reset buttons */}
-        <Flex align="center" gap={2}>
-          <Tooltip label="Go Back" aria-label="Go Back Tooltip">
-            <IconButton
-              aria-label="Go back"
-              icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
-              onClick={() => router.push('/Dashboard')}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          <Tooltip label="Reset" aria-label="Reset Tooltip">
-            <IconButton
-              aria-label="Reset"
-              icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={onResetModalOpen}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          {/* Eye Icon for toggling Flip Card and Additional Info */}
-          <Tooltip label={eyeIcon === 'open' ? "Hide Flip Card" : "Show Flip Card"} aria-label="Toggle Flip Card Visibility Tooltip">
-            <IconButton
-              aria-label="Toggle Flip Card Visibility"
-              icon={eyeIcon === 'open' ? <EyeOpenIcon style={{ width: '20px', height: '20px' }} /> : <EyeNoneIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={toggleFlipCardVisibility}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />
-          </Tooltip>
-          <Tooltip label="Submit" aria-label="Submit Tooltip">
-            <Button
-              onClick={handleSubmit}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            >
-              Submit
-            </Button>
-          </Tooltip>
-          <Switch
-            isChecked={optionsShuffled}
-            onChange={handleToggleShuffleOptions}
-            size="lg"
-            colorScheme="teal"
-          />
-        </Flex>
+        {/* Parent Flex Container */}
+        <Flex
+          justifyContent="space-between"
+          align="center"
+          mb={4}
+          direction="row"
+        >
+          {/* Left Part */}
+          <Flex align="center" gap={2}>
+            {/* Back Button */}
+            <Tooltip label="Go Back" aria-label="Go Back Tooltip">
+              <IconButton
+                aria-label="Go back"
+                icon={<ExitIcon style={{ transform: 'scaleX(-1)', width: '20px', height: '20px' }} />}
+                onClick={() => router.push('/Dashboard')}
+                backgroundColor="transparent"
+                _hover={{ backgroundColor: iconHoverBg }}
+              />
+            </Tooltip>
+            {!isMobile && (
+              <>
+                {/* Reset Button */}
+                <Tooltip label="Reset" aria-label="Reset Tooltip">
+                  <IconButton
+                    aria-label="Reset"
+                    icon={<UpdateIcon style={{ width: '20px', height: '20px' }} />}
+                    onClick={onResetModalOpen}
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  />
+                </Tooltip>
+                {/* Hide Flip Card Button */}
+                <Tooltip
+                  label={eyeIcon === 'open' ? 'Hide Flip Card' : 'Show Flip Card'}
+                  aria-label="Toggle Flip Card Visibility Tooltip"
+                >
+                  <IconButton
+                    aria-label="Toggle Flip Card Visibility"
+                    icon={
+                      eyeIcon === 'open' ? (
+                        <EyeOpenIcon style={{ width: '20px', height: '20px' }} />
+                      ) : (
+                        <EyeNoneIcon style={{ width: '20px', height: '20px' }} />
+                      )
+                    }
+                    onClick={toggleFlipCardVisibility}
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  />
+                </Tooltip>
+                {/* Submit Button */}
+                <Tooltip label="Submit" aria-label="Submit Tooltip">
+                  <Button
+                    onClick={handleSubmit}
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  >
+                    Submit
+                  </Button>
+                </Tooltip>
+                {/* Shuffle Options Switch */}
+                <Switch
+                  isChecked={optionsShuffled}
+                  onChange={handleToggleShuffleOptions}
+                  size="lg"
+                  colorScheme="teal"
+                />
+              </>
+            )}
+          </Flex>
 
-        {/* Middle Part for question navigation */}
-        <Flex justifyContent="center" align="center">
-          {/* Previous Button */}
-          <IconButton
-            aria-label="Previous"
-            icon={<ArrowLeftIcon />}
-            onClick={() => handleNavigate('prev')}
-            backgroundColor="transparent"
-            _hover={{
-              backgroundColor: iconHoverBg,
-              borderRadius: 'full',
-              borderColor: 'transparent'
-            }}
-            isRound
-            marginRight={2}
-          />
-
-          {/* Question Navigation Input */}
-          <Input
-            type="number"
-            value={currentQuestionIndex + 1}
-            onChange={(e) => handleNavigate('goto', Number(e.target.value))}
-            width="75px"
-            marginRight={2}
-            fontSize="15px"
-          />
-          <Text marginX={2} fontSize="15px">/ {filteredQuestions.length}</Text>
-
-          {/* Next Button */}
-          <IconButton
-            aria-label="Next"
-            icon={<ArrowRightIcon />}
-            onClick={() => handleNavigate('next')}
-            backgroundColor="transparent"
-            _hover={{
-              backgroundColor: iconHoverBg,
-              borderRadius: 'full',
-              borderColor: 'transparent'
-            }}
-            isRound
-          />
-        </Flex>
-
-        {/* Rightmost Part for additional options */}
-        <Flex align="center" gap={2}>
-          <Select
-            value={selectedFilter}
-            onChange={(e) => handleDropdownChange(e.target.value)}
-            width="180px"
+          {/* Middle Part for question navigation */}
+          <Flex
+            justifyContent="center"
+            align="center"
+            flex="1"
           >
-            <option value="all">All Questions</option>
-            <option value="favorites">Favorites</option>
-            <option value="incorrect">Incorrect</option>
-            <option value="answered">Answered</option>
-            <option value="unanswered">Unanswered</option>
-          </Select>
-          <Tooltip label="Favorites" aria-label="Favorites Tooltip">
-            <IconButton
-              aria-label="Favorites"
-              icon={isQuestionAvailable && favorites.has(displayedQuestion.id) ? <StarFilledIcon style={{ width: '20px', height: '20px' }} /> : <StarIcon style={{ width: '20px', height: '20px' }} />}
-              onClick={() => isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)}
-              backgroundColor="transparent"
-              _hover={{ backgroundColor: iconHoverBg }}
-            />         
-          </Tooltip>
-          <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
-            <IconButton 
-              aria-label="Shuffle" 
-              icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />} 
-              onClick={onConfirmationModalOpen} 
-              backgroundColor="transparent" 
-              _hover={{ backgroundColor: iconHoverBg }} 
+            {/* Question Navigation Input */}
+            <Input
+              type="number"
+              value={currentQuestionIndex + 1}
+              onChange={(e) => handleNavigate('goto', Number(e.target.value))}
+              width="75px"
+              marginRight={2}
+              fontSize="15px"
+              textAlign="center"
             />
-          </Tooltip>
-          <Tooltip label="Search" aria-label="Search Tooltip">
-            <IconButton 
-              aria-label="Search" 
-              icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />} 
-              onClick={onSearchModalOpen} 
-              backgroundColor="transparent" 
-              _hover={{ backgroundColor: iconHoverBg }} 
-            />
-          </Tooltip>
+            <Text marginX={2} fontSize="15px">
+              / {filteredQuestions.length}
+            </Text>
+          </Flex>
 
-          {/* Theme Toggle Button */}
-          <IconButton
-            icon={colorMode === 'dark' ? <SunIcon style={{ width: '20px', height: '20px' }} /> : <MoonIcon style={{ width: '20px', height: '20px' }} />}
-            onClick={toggleColorMode}
-            aria-label={'Toggle Dark Mode'}
-            backgroundColor={iconBg}
-            _hover={{ backgroundColor: iconHoverBg }}
-          />
+          {/* Right Part */}
+          <Flex align="center" gap={2}>
+          {isMobile ? (
+            <>
+              <IconButton
+                aria-label="Menu"
+                icon={<HamburgerMenuIcon style={{ width: '20px', height: '20px' }} />}
+                onClick={onDrawerOpen}
+                backgroundColor="transparent"
+                _hover={{ backgroundColor: iconHoverBg }}
+              />
+              {/* Drawer for Mobile Menu */}
+              <Drawer
+                isOpen={isDrawerOpen}
+                placement="right"
+                onClose={onDrawerClose}
+              >
+                <DrawerOverlay />
+                <DrawerContent>
+                  {/* Adjusted Header Section */}
+                  <DrawerHeader p={0}>
+                    <Flex align="center" justify="space-between" p={4}>
+                      <Text fontSize="lg" fontWeight="bold">
+                        Menu
+                      </Text>
+                      <DrawerCloseButton position="static" />
+                    </Flex>
+                  </DrawerHeader>
+
+                  <DrawerBody>
+                    <Stack spacing={4}>
+                      {/* Filter Select */}
+                      <Select
+                        value={selectedFilter}
+                        onChange={(e) =>
+                          handleDropdownChange(e.target.value)
+                        }
+                      >
+                        <option value="all">All Questions</option>
+                        <option value="favorites">Favorites</option>
+                        <option value="incorrect">Incorrect</option>
+                        <option value="answered">Answered</option>
+                        <option value="unanswered">Unanswered</option>
+                      </Select>
+
+                      {/* Add to Favorites */}
+                      <Button
+                        onClick={() =>
+                          isQuestionAvailable &&
+                          handleToggleFavorites(displayedQuestion.id)
+                        }
+                        leftIcon={
+                          isQuestionAvailable &&
+                          favorites.has(displayedQuestion.id) ? (
+                            <StarFilledIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          ) : (
+                            <StarIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          )
+                        }
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        {favorites.has(displayedQuestion.id)
+                          ? 'Remove from Favorites'
+                          : 'Add to Favorites'}
+                      </Button>
+
+                      {/* Submit Button */}
+                      <Button
+                        onClick={handleSubmit}
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        Submit
+                      </Button>
+
+                      {/* Shuffle Choices */}
+                      <Flex alignItems="center" justifyContent="center">
+                        <Switch
+                          isChecked={optionsShuffled}
+                          onChange={handleToggleShuffleOptions}
+                          size="lg"
+                          colorScheme="teal"
+                          mr={2}
+                        />
+                        <Text fontWeight="bold">Shuffle Choices</Text>
+                      </Flex>
+
+                      {/* Shuffle Questions */}
+                      <Button
+                        onClick={onConfirmationModalOpen}
+                        leftIcon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />}
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        Shuffle Questions
+                      </Button>
+
+                      {/* Hide Flip Card */}
+                      <Button
+                        onClick={toggleFlipCardVisibility}
+                        leftIcon={
+                          eyeIcon === 'open' ? (
+                            <EyeOpenIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          ) : (
+                            <EyeNoneIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          )
+                        }
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        {eyeIcon === 'open'
+                          ? 'Hide Flip Card'
+                          : 'Show Flip Card'}
+                      </Button>
+
+                      {/* Reset Button */}
+                      <Button
+                        onClick={onResetModalOpen}
+                        leftIcon={
+                          <UpdateIcon
+                            style={{ width: '20px', height: '20px' }}
+                          />
+                        }
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        Reset
+                      </Button>
+
+                      {/* Search Button */}
+                      <Button
+                        onClick={onSearchModalOpen}
+                        leftIcon={
+                          <MagnifyingGlassIcon
+                            style={{ width: '23px', height: '23px' }}
+                          />
+                        }
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        Search
+                      </Button>
+
+                      {/* Theme Toggle Button */}
+                      <Button
+                        onClick={toggleColorMode}
+                        leftIcon={
+                          colorMode === 'dark' ? (
+                            <SunIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          ) : (
+                            <MoonIcon
+                              style={{ width: '20px', height: '20px' }}
+                            />
+                          )
+                        }
+                        variant="ghost"
+                        fontWeight="bold"
+                      >
+                        Toggle {colorMode === 'light' ? 'Dark' : 'Light'} Mode
+                      </Button>
+                    </Stack>
+                  </DrawerBody>
+
+                  {/* Removed DrawerFooter */}
+                </DrawerContent>
+              </Drawer>
+            </>
+            ) : (
+              <Flex align="center" gap={2}>
+                {/* Filter Select */}
+                <Select
+                  value={selectedFilter}
+                  onChange={(e) => handleDropdownChange(e.target.value)}
+                  width="180px"
+                >
+                  <option value="all">All Questions</option>
+                  <option value="favorites">Favorites</option>
+                  <option value="incorrect">Incorrect</option>
+                  <option value="answered">Answered</option>
+                  <option value="unanswered">Unanswered</option>
+                </Select>
+
+                {/* Favorites Button */}
+                <Tooltip label="Favorites" aria-label="Favorites Tooltip">
+                  <IconButton
+                    aria-label="Favorites"
+                    icon={
+                      isQuestionAvailable && favorites.has(displayedQuestion.id) ? (
+                        <StarFilledIcon style={{ width: '20px', height: '20px' }} />
+                      ) : (
+                        <StarIcon style={{ width: '20px', height: '20px' }} />
+                      )
+                    }
+                    onClick={() =>
+                      isQuestionAvailable && handleToggleFavorites(displayedQuestion.id)
+                    }
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  />
+                </Tooltip>
+
+                {/* Shuffle Button */}
+                <Tooltip label="Shuffle" aria-label="Shuffle Tooltip">
+                  <IconButton
+                    aria-label="Shuffle"
+                    icon={<ShuffleIcon style={{ width: '20px', height: '20px' }} />}
+                    onClick={onConfirmationModalOpen}
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  />
+                </Tooltip>
+
+                {/* Search Button */}
+                <Tooltip label="Search" aria-label="Search Tooltip">
+                  <IconButton
+                    aria-label="Search"
+                    icon={<MagnifyingGlassIcon style={{ width: '23px', height: '23px' }} />}
+                    onClick={onSearchModalOpen}
+                    backgroundColor="transparent"
+                    _hover={{ backgroundColor: iconHoverBg }}
+                  />
+                </Tooltip>
+
+                {/* Theme Toggle Button */}
+                <IconButton
+                  icon={
+                    colorMode === 'dark' ? (
+                      <SunIcon style={{ width: '20px', height: '20px' }} />
+                    ) : (
+                      <MoonIcon style={{ width: '20px', height: '20px' }} />
+                    )
+                  }
+                  onClick={toggleColorMode}
+                  aria-label={'Toggle Dark Mode'}
+                  backgroundColor={iconBg}
+                  _hover={{ backgroundColor: iconHoverBg }}
+                />
+              </Flex>
+            )}
+          </Flex>
         </Flex>
-      </Flex>
 
         {/* Question Card */}
         <QuestionDisplay
@@ -825,19 +1052,70 @@ const updateScore = async (questionId: number, scoreChange: number) => {
           cardBgColor={cardBgColor}
           cardTextColor={cardTextColor}
           unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
-          quizSetId={id as string}  // Pass quizSetId here
+          quizSetId={id as string} // Pass quizSetId here
         />
 
         {/* Conditional rendering for Flip Card and Additional Info */}
         {showFlipCard && (
           <>
-            {/* Flip Card for Answer Reveal */}
-            <Flex justify="center" my={4} align="center" gap={4}>
-              <FlipCard
-                isFlipped={isCardFlipped}
-                onClick={handleFlipCard}
-                frontContent={<Box p={4}>Click to reveal answer</Box>}
-                backContent={<Box p={4}>Answer: {displayedQuestion.answer}</Box>} // Ensure this reflects shuffled state
+            {/* Flip Card with Navigation Arrows */}
+            <Flex
+              justify="center"
+              alignItems="center"
+              my={4}
+              gap={2}
+              direction="row"
+              wrap={useBreakpointValue({ base: 'wrap', md: 'nowrap' })} // Allow wrapping on small screens
+            >
+              {/* Previous Button */}
+              <IconButton
+                aria-label="Previous"
+                icon={<ArrowLeftIcon />}
+                onClick={() => handleNavigate('prev')}
+                backgroundColor="transparent"
+                _hover={{
+                  backgroundColor: iconHoverBg,
+                  borderRadius: 'full',
+                  borderColor: 'transparent',
+                }}
+                isRound
+                size={useBreakpointValue({ base: 'sm', md: 'md' })}
+                flexShrink={0} // Allow arrow to shrink
+              />
+
+              {/* Flip Card */}
+              <Box flex="1" maxWidth="600px">
+                <FlipCard
+                  isFlipped={isCardFlipped}
+                  onClick={handleFlipCard}
+                  frontContent={
+                    <Box p={4} textAlign="center">
+                      Click to reveal answer
+                    </Box>
+                  }
+                  backContent={
+                    <Box p={4} textAlign="center">
+                      Answer: {displayedQuestion.answer}
+                    </Box>
+                  }
+                  bgColor={cardBgColor}
+                />
+              </Box>
+
+              {/* Next Button */}
+              <IconButton
+                aria-label="Next"
+                icon={<ArrowRightIcon />}
+                onClick={() => handleNavigate('next')}
+                backgroundColor="transparent"
+                _hover={{
+                  backgroundColor: iconHoverBg,
+                  borderRadius: 'full',
+                  borderColor: 'transparent',
+                }}
+                isRound
+                size={useBreakpointValue({ base: 'sm', md: 'md' })}
+                flexShrink={0} // Allow arrow to shrink
               />
             </Flex>
 
@@ -856,7 +1134,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
                     options: displayedQuestion.options,
                     answer: displayedQuestion.answer,
                   }}
-                  quizSetId={id as string}  // Pass quizSetId here
+                  quizSetId={id as string} // Pass quizSetId here
                 />
 
                 <Divider my={4} />

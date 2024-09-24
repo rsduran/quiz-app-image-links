@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import DashboardNavbar from '../components/DashboardNavbar';
-import { Box } from '@chakra-ui/react';
+import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import LoadingLayout from '../components/LoadingLayout';
 import CalendarEditor from '../components/CalendarEditor';
 import DynamicQuizTable from '../components/DynamicQuizTable';
@@ -14,8 +14,14 @@ const Dashboard = () => {
 
   const handleAddNewQuizSet = () => {
     // Refresh the quiz sets by updating the refresh key
-    setRefreshKey(oldKey => oldKey + 1);
+    setRefreshKey((oldKey) => oldKey + 1);
   };
+
+  // Determine the flex direction based on screen size
+  const flexDirection = useBreakpointValue<'column' | 'row'>({
+    base: 'column',
+    md: 'row',
+  }) || 'column';
 
   return (
     <LoadingLayout>
@@ -23,16 +29,24 @@ const Dashboard = () => {
         <DashboardNavbar onAddNewQuizSet={handleAddNewQuizSet} />
         <CalendarEditor />
         <DynamicQuizTable key={refreshKey} />
-        <Box display="flex" justifyContent="center" mt="20px"> {/* Center horizontally */}
-          <Box display="flex" alignItems="center" gap="4"> {/* Flex container for items */}
-            <Box flex="1"> {/* Smaller flex-grow for CountdownTimer */}
-              <CountdownTimer />
-            </Box>
-            <Box flex="100"> {/* Larger flex-grow for MotivationalQuote */}
-              <MotivationalQuote />
-            </Box>
+
+        <Flex
+          justify="center"
+          mt={['10px', '20px']}
+          flexDirection={flexDirection}
+          alignItems="center"
+          mx="auto"
+          px={[4, 8]}
+          maxW="1200px"
+          gap={4}
+        >
+          <Box flexBasis={['100%', '30%']} flexShrink={0}>
+            <CountdownTimer />
           </Box>
-        </Box>
+          <Box flexBasis={['100%', '70%']} mt={['20px', 0]}>
+            <MotivationalQuote />
+          </Box>
+        </Flex>
       </Box>
     </LoadingLayout>
   );

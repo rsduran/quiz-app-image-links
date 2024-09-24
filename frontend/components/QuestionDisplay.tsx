@@ -1,8 +1,8 @@
 // QuestionDisplay.tsx
 
 import React from 'react';
-import { Box, Text, useColorModeValue } from '@chakra-ui/react';
-import { MathJax } from "better-react-mathjax";
+import { Box, Text, useColorModeValue, useBreakpointValue } from '@chakra-ui/react';
+import { MathJax } from 'better-react-mathjax';
 import { Question } from '../utils/types';
 
 type QuestionDisplayProps = {
@@ -75,10 +75,13 @@ const QuestionDisplay = ({
   unselectedOptionBg,
   quizSetId,
 }: QuestionDisplayProps) => {
-  const selectedBorderColor = useColorModeValue("blue.500", "blue.300");
-  const unselectedBorderColor = useColorModeValue("gray.200", "gray.600");
-  const selectedTextColor = useColorModeValue("blue.600", "blue.200");
+  const selectedBorderColor = useColorModeValue('blue.500', 'blue.300');
+  const unselectedBorderColor = useColorModeValue('gray.200', 'gray.600');
+  const selectedTextColor = useColorModeValue('blue.600', 'blue.200');
   const unselectedTextColor = cardTextColor;
+
+  const optionPadding = useBreakpointValue({ base: 4, md: 2 });
+  const optionFontSize = useBreakpointValue({ base: 'md', md: 'sm' });
 
   const handleOptionClick = (optionIndex: number) => {
     const optionLabel = `Option ${String.fromCharCode(65 + optionIndex)}`;
@@ -89,12 +92,19 @@ const QuestionDisplay = ({
     }
   };
 
-  const processedQuestion = processTextForImages(transformMathContent(question.question || 'Question'), quizSetId);
+  const processedQuestion = processTextForImages(
+    transformMathContent(question.question || 'Question'),
+    quizSetId
+  );
 
   return (
     <Box borderWidth="1px" borderRadius="lg" p={4} bg={cardBgColor} color={cardTextColor}>
       <MathJax dynamic>
-        <Text fontFamily="'HurmeGeometricSans2', -apple-system, 'system-ui', sans-serif" fontSize="xl" mb={4}>
+        <Text
+          fontFamily="'HurmeGeometricSans2', -apple-system, 'system-ui', sans-serif"
+          fontSize="xl"
+          mb={4}
+        >
           <div dangerouslySetInnerHTML={{ __html: processedQuestion }} />
         </Text>
       </MathJax>
@@ -109,7 +119,7 @@ const QuestionDisplay = ({
         return (
           <Box
             key={index}
-            p={2}
+            p={optionPadding}
             my={2}
             borderWidth="2px"
             borderRadius="lg"
@@ -120,6 +130,7 @@ const QuestionDisplay = ({
             fontFamily="'HurmeGeometricSans2', -apple-system, 'system-ui', sans-serif"
             color={isSelected ? selectedTextColor : unselectedTextColor}
             _hover={{ borderColor: selectedBorderColor }}
+            fontSize={optionFontSize}
           >
             <MathJax dynamic>
               <div dangerouslySetInnerHTML={{ __html: processedOption }} />

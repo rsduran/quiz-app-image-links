@@ -1,6 +1,7 @@
 // CountdownTimer.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { Box, Flex, Text } from '@chakra-ui/react';
 
 const CountdownTimer = () => {
   const [countdown, setCountdown] = useState({
@@ -12,15 +13,18 @@ const CountdownTimer = () => {
 
   // Calculate the countdown timer
   const calculateCountdown = () => {
-    const targetDate = new Date("April 11, 2024, 00:00:00").getTime();
+    const targetDate = new Date('April 11, 2024, 00:00:00').getTime();
     const now = new Date().getTime();
-    const timezoneOffset = 8 * 60 * 60 * 1000; // Philippine Time (GMT+8)
-    const distance = targetDate - now + timezoneOffset;
+    const distance = targetDate - now;
 
-    // Calculating days, hours, minutes and seconds
+    // Calculating days, hours, minutes, and seconds
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const hours = Math.floor(
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor(
+      (distance % (1000 * 60 * 60)) / (1000 * 60)
+    );
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
     setCountdown({ days, hours, minutes, seconds });
@@ -32,17 +36,23 @@ const CountdownTimer = () => {
   }, []);
 
   return (
-    <div className="flex items-center justify-center gap-4">
-      <div className="text-center">
-        <span className="block text-5xl font-bold">{countdown.days}</span>
-        <span className="text-xl">days left</span>
-      </div>
-      <div className="flex items-center justify-center gap-2">
-        <div>{countdown.hours}h</div>
-        <div>{countdown.minutes}m</div>
-        <div>{countdown.seconds}s</div>
-      </div>
-    </div>
+    <Flex
+      direction="column"
+      alignItems="center"
+      justifyContent="center"
+      p={4}
+      w="100%"
+    >
+      <Text fontSize={['4xl', '5xl']} fontWeight="bold">
+        {countdown.days}
+      </Text>
+      <Text fontSize={['md', 'xl']}>days left</Text>
+      <Flex mt={2} gap={2} fontSize={['sm', 'md']}>
+        <Box>{countdown.hours}h</Box>
+        <Box>{countdown.minutes}m</Box>
+        <Box>{countdown.seconds}s</Box>
+      </Flex>
+    </Flex>
   );
 };
 

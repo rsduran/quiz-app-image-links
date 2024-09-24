@@ -1,7 +1,7 @@
 // MotivationalQuote.tsx
 
 import React, { useEffect, useState } from 'react';
-import { Alert } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Text, Flex } from '@chakra-ui/react';
 
 const quotes = [
   "Success is the sum of small efforts, repeated day in and day out. 🌟 - Robert Collier",
@@ -57,10 +57,10 @@ const quotes = [
 ];
 
 const getCurrentDateIndex = () => {
-    const startDate = new Date('2023-01-01');
-    const today = new Date();
-    const differenceInTime = today.getTime() - startDate.getTime();
-    return Math.floor(differenceInTime / (1000 * 3600 * 24)) % quotes.length;
+  const startDate = new Date('2023-01-01');
+  const today = new Date();
+  const differenceInTime = today.getTime() - startDate.getTime();
+  return Math.floor(differenceInTime / (1000 * 3600 * 24)) % quotes.length;
 };
 
 const MotivationalQuote = () => {
@@ -75,27 +75,34 @@ const MotivationalQuote = () => {
   }, []);
 
   const quote = quotes[quoteIndex].split(' - ');
-  const motivationalText = quote[0].split(" ");
+  const motivationalText = quote[0].split(' ');
   const emoji = motivationalText.pop(); // Extract the emoji
-  const textWithoutEmoji = motivationalText.join(" ");
+  const textWithoutEmoji = motivationalText.join(' ');
   const author = quote[1];
 
   return (
-    <div className="text-center p-4">
-      <Alert status="warning" variant="left-accent" w="100%">
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
-          <p className="text-lg" style={{ marginBottom: '0', textAlign: 'center' }}>
-            <span className="italic">{textWithoutEmoji}</span> {emoji}
-          </p>
-          <p className="text-lg" style={{ marginTop: '0', textAlign: 'center' }}>
-            - {author}
-          </p>
-          <p style={{ textAlign: 'center' }}>
-            You can add a quiz set by clicking the ‘+’ icon in the navigational bar.
-          </p>
-        </div>
+    <Box w="100%" p={4}>
+      <Alert
+        status="warning"
+        variant="left-accent"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        textAlign="center"
+        height="100%"
+        py={6}
+      >
+        <Text fontSize={['lg', 'xl']} mt={4} fontStyle="italic">
+          {textWithoutEmoji} {emoji}
+        </Text>
+        <Text fontSize={['md', 'lg']} mt={2}>
+          - {author}
+        </Text>
+        <Text fontSize={['sm', 'md']} mt={4}>
+          You can add a quiz set by clicking the ‘+’ icon in the navigation bar.
+        </Text>
       </Alert>
-    </div>
+    </Box>
   );
 };
 
