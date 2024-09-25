@@ -22,9 +22,9 @@ function Calendar({
   const dayTodayBg = useColorModeValue("bg-[#20242c]", "bg-white");
   const dayTodayText = useColorModeValue("text-white", "text-black");
 
-  // Define colors for selected dates
-  const daySelectedBg = useColorModeValue("bg-blue-200", "bg-gray-700");
-  const daySelectedText = useColorModeValue("text-black", "text-white");
+  // Define colors for selected dates (adjusted to remove blue)
+  const daySelectedBg = useColorModeValue("bg-[#20242c]", "bg-white");
+  const daySelectedText = useColorModeValue("text-white", "text-black");
 
   // Define hover styles
   const dayHoverBg = useColorModeValue("hover:bg-gray-200", "hover:bg-gray-600");
@@ -32,6 +32,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      selected={undefined} // Ensure no dates are selected by default
       className={cn("p-3", className)}
       classNames={{
         months:

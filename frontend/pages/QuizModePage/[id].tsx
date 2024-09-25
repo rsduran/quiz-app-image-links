@@ -705,6 +705,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
           align="center"
           mb={4}
           direction="row"
+          position="relative" // Make the parent position relative
         >
           {/* Left Part */}
           <Flex align="center" gap={2}>
@@ -772,9 +773,10 @@ const updateScore = async (questionId: number, scoreChange: number) => {
 
           {/* Middle Part for question navigation */}
           <Flex
-            justifyContent="center"
+            position="absolute" // Position absolutely within the parent
+            left="50%" // Position from the left 50%
+            transform="translateX(-50%)" // Shift left by 50% of its own width to center
             align="center"
-            flex="1"
           >
             {/* Question Navigation Input */}
             <Input
@@ -1084,7 +1086,7 @@ const updateScore = async (questionId: number, scoreChange: number) => {
               />
 
               {/* Flip Card */}
-              <Box flex="1" maxWidth="600px">
+              <Box flex="1" maxWidth="300px">
                 <FlipCard
                   isFlipped={isCardFlipped}
                   onClick={handleFlipCard}
