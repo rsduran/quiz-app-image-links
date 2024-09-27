@@ -17,34 +17,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Helper functions
-def download_image(img_url, path, name):
-    # Construct the full path for the image
-    full_path = os.path.join('../frontend/public/assets/images/background', path)
-
-    # Log the full path for debugging
-    print(f"Attempting to save image to: {os.path.join(full_path, name)}")
-    print(f"Image URL: {img_url}")
-
-    # Ensure the directory exists
-    if not os.path.exists(full_path):
-        print(f"Creating directory: {full_path}")
-        os.makedirs(full_path)
-
-    # Try to download the image
-    try:
-        response = requests.get(img_url, stream=True, verify=False)
-        if response.status_code == 200:
-            with open(os.path.join(full_path, name), 'wb') as out_file:
-                out_file.write(response.content)
-            print(f"Image successfully downloaded from: {img_url}")
-            return True
-        else:
-            print(f"Failed to download image: {img_url} - HTTP Status Code: {response.status_code}")
-            return False
-    except Exception as e:
-        print(f"Exception occurred during image download: {e}")
-        return False
+# Helper function to process image URLs (no image downloads, just ensure correct URLs)
+def process_image_url(img_url, base_url="https://www.indiabix.com"):
+    # If the URL is relative (starts with '/'), prepend the base URL
+    if img_url.startswith('/'):
+        return base_url + img_url
+    # Otherwise, return the full URL as is (NO quiz_set_id should be added)
+    return img_url
 
 def fetch_discussion_comments(discussion_link):
     comments = []
@@ -101,8 +80,15 @@ def fetch_discussion_comments(discussion_link):
         print("No comments were extracted")
     return '\n'.join(comments)
 
+def process_question_with_square_root(html_content):
+    # Handle the square root format by replacing <span class='root'><span class='symbol'>X</span></span> with √(X)
+    root_pattern = re.compile(r"<span class=['\"]root['\"]><span class=['\"]symbol['\"]>(.*?)</span></span>")
+    processed_content = re.sub(root_pattern, r"√(\1)", html_content)
+
+    return processed_content
+
+# Helper function to process questions
 def process_question(base_url, url_number, question_counter, quiz_set_id):
-    # Check if URL starts with https://
     if not base_url.startswith('https://'):
         base_url = 'https://' + base_url
     url = base_url + str(url_number).zfill(6)  # Format the URL number to ensure it's padded with zeros if necessary
@@ -112,176 +98,105 @@ def process_question(base_url, url_number, question_counter, quiz_set_id):
     # Retry mechanism for robust scraping
     for attempt in range(MAX_RETRIES):
         try:
-            time.sleep(backoff_time * attempt)  # Exponential backoff between retries
-            # Fetch the page content
+            time.sleep(backoff_time * attempt)
             page = requests.get(url, headers={'User-Agent': choice(config.headers_list)}, verify=False)
-            page.raise_for_status()  # Ensure the request was successful
-            break  # Exit loop if the request is successful
+            page.raise_for_status()
+            break
         except requests.RequestException as request_exception:
             print(f'Error occurred for {url}, waiting for {backoff_time * attempt} seconds before retrying...')
-            if attempt == MAX_RETRIES - 1:  # If we've reached the maximum number of retries
+            if attempt == MAX_RETRIES - 1:
                 print(f"Failed to fetch {url} after {MAX_RETRIES} attempts. Error: {request_exception}")
-                return question_counter  # Return the current counter if it fails
-            continue  # Continue retrying
-        except Exception as err:
-            print(f"An unexpected error occurred: {err}")
-            return question_counter  # Return the current question counter in case of any other errors
+                return question_counter
+            continue
 
-    soup = BeautifulSoup(page.content, 'html.parser')  # Parse the HTML content of the page
-    questions = soup.find_all('div', class_='bix-div-container')  # Find all the question containers
+    soup = BeautifulSoup(page.content, 'html.parser')
+    questions = soup.find_all('div', class_='bix-div-container')
 
     for question in questions:
         try:
-            # Initialize a dictionary to store the processed question data
-            question_dict = {}
+            # Initialize variables with defaults to avoid undefined errors
+            question_text = 'Question not found.'
+            answer = 'Answer not found.'
+            explanation = 'Explanation not found.'
+            discussion_link = 'Discussion link not found.'
 
-            # Extract the question text
+            # Extract question text
             q_text_elem = question.find('div', class_='bix-td-qtxt')
-            question_text = str(q_text_elem).strip() if q_text_elem else 'Question not found.'
+            if q_text_elem:
+                question_text = str(q_text_elem).strip()
 
-            # Extract options and the answer
+            # Process question text for square root symbols if any
+            question_text = process_question_with_square_root(question_text)
+
+            # Extract options and process images within options
             options_elems = question.find_all('div', class_='bix-td-option-val')
-            answer_elem = question.find('input', class_='jq-hdnakq')
-            answer = answer_elem['value'].upper() if answer_elem else 'Answer not found.'
-
-            # Validate the answer
-            if answer not in ['A', 'B', 'C', 'D']:
-                raise ValueError('Invalid answer format.')
-
-            answer = f"Option {answer}" if answer != 'Answer not found.' else answer
-
-            # Handle explanation and discussion link
-            explanation_elem = question.find('div', class_='bix-ans-description')
-            discussion_link_elem = question.find('a', class_='discuss')
-            explanation = str(explanation_elem).strip() if explanation_elem else 'Explanation not found.'
-            discussion_link = discussion_link_elem['href'] if discussion_link_elem else 'Discussion link not found.'
-
-            # Image handling logic
-            img_count = {'within': 1, 'after': 1, 'explanation': 1}
-            img_elems = q_text_elem.find_all('img') if q_text_elem else []
-
-            # Process images within the question text
-            for img_elem in img_elems:
-                img_url = urljoin(url, img_elem['src'])
-                img_data = str(img_elem.previous) if img_elem.previous else ""
-                img_data = re.sub(r'\s+', '', img_data)
-
-                # Determine if the image is 'within' or 'after' based on HTML structure
-                name_type = 'after' if '<br/>' in img_data else 'within'
-                placeholder = f'(image)q{question_counter}_{quiz_set_id}_{name_type}_{img_count[name_type]}(image)'  # Include quiz_set_id in image name
-                question_text = question_text.replace(str(img_elem), placeholder)
-
-                # Define the name and folder path for the image
-                name = f'q{question_counter}_{quiz_set_id}_{name_type}_{img_count[name_type]}.png'
-                folder_path = img_type_directory[name_type]
-
-                # Download the image
-                download_image(img_url, folder_path, name)
-                img_count[name_type] += 1
-
-            # Process explanation images, if present
-            if explanation_elem:
-                img_elems = explanation_elem.find_all('img')
-                for img_elem in img_elems:
-                    img_url = urljoin(url, img_elem['src'])
-                    name = f'q{question_counter}_{quiz_set_id}_explanation_{img_count["explanation"]}.png'
-                    folder_path = img_type_directory['explanation']
-
-                    placeholder = f'(image)q{question_counter}_{quiz_set_id}_explanation_{img_count["explanation"]}(image)'
-                    explanation = explanation.replace(str(img_elem), placeholder)
-
-                    # Download explanation image
-                    download_image(img_url, folder_path, name)
-                    img_count["explanation"] += 1
-
-            # Process options and their images
             options_processed = []
-            for i, option_elem in enumerate(options_elems):
-                flex_wrap_div = option_elem.find('div', class_='flex-wrap')
-                if flex_wrap_div:
-                    # Handle images in the options
-                    img_options = flex_wrap_div.find_all('img')
-                    option_img_count = 1
 
-                    for img_option in img_options:
-                        img_url = urljoin(url, img_option['src'])
-                        option_name = chr(ord('A') + i)  # Option A, B, C, etc.
-                        name = f'q{question_counter}_{quiz_set_id}_option{option_name}_{option_img_count}.png'
-                        folder_path = img_type_directory["option"]
+            for option_elem in options_elems:
+                option_text = option_elem.text.strip()
 
-                        placeholder = f'<img src="/assets/images/background/Option/{name}" alt="{name}" style="display: inline-block; width: auto; height: auto;">'
-                        flex_wrap_div = BeautifulSoup(flex_wrap_div.decode().replace(str(img_option), placeholder), 'html.parser')
+                # Process option images if any
+                img_tags = option_elem.find_all('img')
+                for img_tag in img_tags:
+                    img_url = img_tag['src']
+                    if img_url.startswith('/'):
+                        img_url = f"https://www.indiabix.com{img_url}"  # Adjust base URL for relative paths
+                    option_text += f'<br><img src="{img_url}" alt="Option Image" style="display: inline-block; width: auto; height: auto;">'
 
-                        # Download option image
-                        download_image(img_url, folder_path, name)
-                        option_img_count += 1
+                # Process square root symbols in options as well
+                option_text = process_question_with_square_root(option_text)
 
-                    option_text = flex_wrap_div.decode_contents().strip()  # Processed option text
-                else:
-                    option_text = option_elem.text.strip()  # Plain text option
+                options_processed.append(option_text)
 
-                # Process each option text to replace <span class="root"> tags
-                root_span_in_option = re.search('<span class="root">(.*?)</span>', option_text)
-                if root_span_in_option:
-                    option_text = re.sub(root_span_in_option.group(), f'√({root_span_in_option.group(1).strip()})', option_text)
+            # Extract the correct answer
+            answer_elem = question.find('input', class_='jq-hdnakq')
+            if answer_elem:
+                answer = f"Option {answer_elem['value'].upper()}"
 
-                options_processed.append(option_text)  # Add the processed option to the list
+            # Extract explanation and discussion link
+            explanation_elem = question.find('div', class_='bix-ans-description')
+            if explanation_elem:
+                explanation = str(explanation_elem).strip()
+                explanation = process_question_with_square_root(explanation)  # Process square root in explanation
 
-            # Fetch and process discussion comments if the link is valid
-            if discussion_link != 'Discussion link not found.':
-                discussion_comments = fetch_discussion_comments(discussion_link)
-                question_dict['discussion_comments'] = discussion_comments
-            else:
-                question_dict['discussion_comments'] = ''
+            discussion_link_elem = question.find('a', class_='discuss')
+            if discussion_link_elem:
+                discussion_link = discussion_link_elem['href']
+
+            # Ensure `quiz_set_id` is properly passed when creating the question
+            if quiz_set_id is None:
+                raise ValueError(f"`quiz_set_id` is missing for question {question_counter}")
 
             # Log the processed question details
             print(f"Processed Question {question_counter}:")
             print(f"Text: {question_text}")
-            print("Options: \n{}".format('\n'.join(options_processed)))
+            print(f"Options: \n{options_processed}")
             print(f"Answer: {answer}")
-            print(f"URL: {url}")
             print(f"Explanation: {explanation}")
             print(f"Discussion Link: {discussion_link}")
-            print(f"Image Placeholder: {placeholder if img_elems else 'No Image'}")
             print("----------------------------------------------------")
 
-            # Prepare the question dictionary to store in the database
-            question_dict = {
-                'text': question_text,
-                'options': options_processed,
-                'answer': answer,
-                'url': url,
-                'explanation': explanation,
-                'discussion_link': discussion_link,
-                'discussion_comments': question_dict.get('discussion_comments', '')
-            }
-
-            # Store the question in the database
+            # Create the new question and add it to the session
             new_question = Question(
-                text=question_dict['text'],
-                options=question_dict['options'],
-                answer=question_dict['answer'],
-                url=question_dict['url'],
-                explanation=question_dict['explanation'],
-                discussion_link=question_dict['discussion_link'],
-                discussion_comments=question_dict.get('discussion_comments', ''),
-                quiz_set_id=quiz_set_id,
-                order=question_counter  # Set the order field
+                text=question_text,
+                options=options_processed,
+                answer=answer,
+                url=url,
+                explanation=explanation,
+                discussion_link=discussion_link,
+                quiz_set_id=quiz_set_id,  # Ensure this is passed correctly
+                order=question_counter
             )
             db.session.add(new_question)
-
-            # Increment the global question counter
             question_counter += 1
 
         except Exception as e:
             print(f"Error occurred while processing question: {e}")
 
-    # Commit changes to the database
     db.session.commit()
-
-    # Return the updated question counter
     return question_counter
 
+# Function to process PinoyBix questions
 def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
     # Ensure the URL starts with https://
     if not url.startswith('https://'):
@@ -299,10 +214,6 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
 
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            folder_path = 'PinoybixAfter'
-            if not os.path.exists(f'assets/images/background/{folder_path}'):
-                os.makedirs(f'assets/images/background/{folder_path}')
-
             # Iterate over all paragraphs and look for the question pattern
             paragraphs = soup.find_all('p')
             for p in paragraphs:
@@ -313,67 +224,58 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                 # Look for the question pattern (e.g., "1.")
                 que_match = re.match(r'^(\d+)\.', p.text)
                 if que_match:
-                    # Ignore the question number from the webpage
-                    # Use your own question_counter
-
+                    # Extract and clean the question
                     question_html = str(p)
                     question_html = re.sub(r'^<p>\d+\.', '<p>', question_html)  # Remove question number from HTML
 
                     soup_question = BeautifulSoup(question_html, 'html.parser')
-                    for img_tag in soup_question.find_all(['img', 'a']):
-                        img_tag.decompose()  # Remove any image or link tags in the question
-                    question_text = str(soup_question)
 
-                    choices = []
-                    key_answer = ''
-                    placeholder = 'No Image'
-
-                    # Look for an image in the current or next paragraph
+                    # Handle image URLs directly (no downloading needed)
                     img_tag = p.find('img')
                     if not img_tag:
                         next_p = p.find_next_sibling('p')
                         img_tag = next_p.find('img') if next_p else None
 
+                    # If an image is found, make sure the URL is complete and update the HTML
                     if img_tag and 'src' in img_tag.attrs:
                         img_url = img_tag['src']
-                        # Use your own question_counter in the image filename
-                        name = f'pinoybix_q{question_counter}_{quiz_set_id}_after_1.png'
-                        download_success = download_image(img_url, folder_path, name)
-                        if download_success:
-                            placeholder = f'<br/>(image)pinoybix_q{question_counter}_{quiz_set_id}_after_1(image)'
-                            question_text += placeholder
+                        if img_url.startswith('/'):
+                            img_url = f'https://www.pinoybix.org{img_url}'
+                        # Add the image to the question HTML
+                        question_html += f'<br><img src="{img_url}" alt="Question Image" style="display: inline-block; width: auto; height: auto;">'
+
+                    question_text = question_html  # Updated question HTML with image
+
+                    choices = []
+                    key_answer = ''
 
                     # Process the choices and find the answer
                     next_p = p.find_next_sibling()
                     while next_p:
-                        if next_p.name == 'p':
-                            if not next_p.text.startswith("View Answer:") and not next_p.text.startswith("Solution:"):
-                                choice_match = re.match(r'^[A-Da-d][\).]', next_p.text)
-                                if choice_match:
-                                    choice_html = str(next_p)
-                                    choice_html = re.sub(r'^<p>[A-Da-d][\).]\s*', '<p>', choice_html)
-                                    choices.append(choice_html)
-                                elif 'Answer:' in next_p.text:
-                                    answer_match = re.search(r'Option ([A-D])', next_p.text)
-                                    if answer_match:
-                                        key_answer = 'Option ' + answer_match.group(1)
-                                    break
-                        elif next_p.name == 'div' and 'wp_shortcodes_toggle' in next_p.get('class', []):
-                            # Look for the answer in a toggle section if available
-                            answer_div = next_p.find('div', class_='togglec clearfix')
-                            if answer_div:
-                                answer_match = re.search(r'Option ([A-D])', answer_div.get_text())
-                                if answer_match:
-                                    key_answer = 'Option ' + answer_match.group(1)
+                        if next_p.name == 'p' and re.match(r'^[A-Da-d][\).]', next_p.text):
+                            # Clean up choice text
+                            choice_html = str(next_p)
+                            choice_html = re.sub(r'^<p>[A-Da-d][\).]\s*', '<p>', choice_html)
+                            choices.append(choice_html)
+                        elif 'Answer:' in next_p.text:
+                            # Extract the answer
+                            answer_match = re.search(r'Option ([A-D])', next_p.text)
+                            if answer_match:
+                                key_answer = 'Option ' + answer_match.group(1)
                             break
                         next_p = next_p.find_next_sibling()
+
+                    # If no answer is found in the sibling, handle the case
+                    if not key_answer and 'Answer:' in next_p.get_text():
+                        answer_match = re.search(r'Option ([A-D])', next_p.get_text())
+                        if answer_match:
+                            key_answer = 'Option ' + answer_match.group(1)
 
                     # Log the processed question details for debugging
                     print(f"Processed Question {question_counter}:")
                     print(f"Text: {question_text}")
                     print(f"Options: {choices}")
                     print(f"Answer: {key_answer}")
-                    print(f"Image Placeholder: {placeholder}")
                     print("----------------------------------------------------")
 
                     # Create a new question entry and add it to the database
@@ -383,7 +285,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
                         answer=key_answer,
                         quiz_set_id=quiz_set_id,
                         url=url,
-                        explanation="No explanation available",
+                        explanation="No explanation available.",
                         discussion_link="No discussion link available",
                         order=question_counter  # Set the order field
                     )
@@ -395,7 +297,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
             return question_counter  # Return the updated question_counter
 
         except requests.RequestException as request_exception:
-            print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying.....')
+            print(f'Error occurred for {url}, waiting for {backoff_time * attempt} secs before retrying...')
             if attempt == MAX_RETRIES - 1:
                 print(f"Error fetching {url} after {MAX_RETRIES} attempts, Error: {request_exception}")
                 return question_counter  # Return the current question_counter even on failure
@@ -404,6 +306,7 @@ def process_pinoybix_question(url, question_counter, quiz_set_id, db, Question):
             print(f'An error occurred: {err}')
             return question_counter  # Return the current question_counter in case of any other errors
 
+# Function to process Examveda questions
 def process_examveda_question(base_url, start_page, end_page, question_counter, quiz_set_id, db, Question):
     if not base_url.startswith('https://'):
         base_url = 'https://' + base_url
@@ -430,25 +333,24 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
                     if not q_text_elem:
                         continue
 
+                    # Extract the question text
                     question_html = str(q_text_elem)
                     question_html = re.sub(r'\$\s+', r'$ ', question_html)  # Handle special characters
                     question_html = re.sub(r'\$\$(.*?)\$\$', r'<span class="mathjax">\1</span>', question_html)
+
+                    # Process images directly from the source, no local downloads or placeholders
                     img_elems = q_text_elem.find_all('img')
 
-                    # Handle main question images
+                    # Replace relative image paths with full URLs
                     for img_elem in img_elems:
-                        img_url = urljoin(url, img_elem['src'])
-                        img_extension = os.path.splitext(img_url)[1]
-                        placeholder = f'(image)examveda_q{question_counter}_{quiz_set_id}_main(image)'
-                        question_html = question_html.replace(str(img_elem), placeholder)
+                        img_url = img_elem['src']
+                        if img_url.startswith('/'):
+                            img_url = urljoin(url, img_url)
+                        # Replace the img tag's source with the correct URL (only if relative)
+                        img_elem['src'] = img_url
 
-                        folder_path = 'ExamvedaMain'
-                        # Correct path without public
-                        if not os.path.exists(f'assets/images/background/{folder_path}'):
-                            os.makedirs(f'assets/images/background/{folder_path}')
-
-                        img_name = f'examveda_q{question_counter}_{quiz_set_id}_main{img_extension}'
-                        download_image(img_url, folder_path, img_name)
+                    # Reconvert the modified HTML
+                    question_html = str(q_text_elem)  # This ensures images aren't duplicated
 
                     # Extract options and explanation
                     options_html = []
@@ -459,11 +361,13 @@ def process_examveda_question(base_url, start_page, end_page, question_counter, 
                             option_html = str(labels[1])
                             options_html.append(option_html)
 
+                    # Extract the correct answer
                     answer_elem = question.find('strong')
                     answer = answer_elem.text.strip() if answer_elem else 'Answer not found.'
                     explanation_elem = answer_elem.find_next_sibling('div') if answer_elem else None
                     explanation = explanation_elem.get_text(strip=True) if explanation_elem else 'No explanation available.'
 
+                    # Extract the discussion link
                     discussion_link_elem = question.find('a', text='Discuss in Board')
                     discussion_link = discussion_link_elem['href'] if discussion_link_elem else 'Discussion link not found.'
 
@@ -562,7 +466,7 @@ def process_examprimer_question(url, question_counter, quiz_set_id, db, Question
                     text=question_text,
                     options=options,
                     answer=correct_option,
-                    explanation="No explanation available",
+                    explanation="No explanation available.",
                     url=url,
                     discussion_link="Discussion link not found.",
                     quiz_set_id=quiz_set_id

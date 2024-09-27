@@ -1054,7 +1054,6 @@ const updateScore = async (questionId: number, scoreChange: number) => {
           cardBgColor={cardBgColor}
           cardTextColor={cardTextColor}
           unselectedOptionBg={colorMode === 'dark' ? 'gray.600' : 'white'}
-          quizSetId={id as string} // Pass quizSetId here
         />
 
         {/* Conditional rendering for Flip Card and Additional Info */}
@@ -1136,7 +1135,6 @@ const updateScore = async (questionId: number, scoreChange: number) => {
                     options: displayedQuestion.options,
                     answer: displayedQuestion.answer,
                   }}
-                  quizSetId={id as string} // Pass quizSetId here
                 />
 
                 <Divider my={4} />

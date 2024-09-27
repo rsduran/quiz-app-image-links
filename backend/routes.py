@@ -71,32 +71,30 @@ def start_scraping():
                 start_url = int(url_set.get('start_url', 1))
                 end_url = int(url_set.get('end_url', start_url))
                 for url_number in range(start_url, end_url + 1):
-                    global_question_counter = process_question(base_url, url_number, global_question_counter, new_quiz_set.id)
+                    global_question_counter = process_question(base_url, url_number, global_question_counter, new_quiz_set.id)  # Passing quiz_set_id
 
             elif 'pinoybix' in base_url:
-                global_question_counter = process_pinoybix_question(base_url, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_pinoybix_question(base_url, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
 
             elif 'examveda' in base_url:
                 start_page = int(url_set.get('start_page', 1))
                 end_page = int(url_set.get('end_page', 10))
-                global_question_counter = process_examveda_question(base_url, start_page, end_page, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_examveda_question(base_url, start_page, end_page, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
 
             elif 'web.archive.org' in base_url:
-                global_question_counter = process_examprimer_question(base_url, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_examprimer_question(base_url, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
 
         elif isinstance(url_set, str):
-
             if "pinoybix" in url_set:
-                global_question_counter = process_pinoybix_question(url_set, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_pinoybix_question(url_set, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
             elif "indiabix" in url_set:
-                global_question_counter = process_question(url_set, global_question_counter, new_quiz_set.id)
+                global_question_counter = process_question(url_set, global_question_counter, new_quiz_set.id)  # Passing quiz_set_id
             elif "examveda" in url_set:
-                global_question_counter = process_examveda_question(url_set, 1, 10, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_examveda_question(url_set, 1, 10, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
             elif "web.archive.org" in url_set:
-                global_question_counter = process_examprimer_question(url_set, global_question_counter, new_quiz_set.id, db, Question)
+                global_question_counter = process_examprimer_question(url_set, global_question_counter, new_quiz_set.id, db, Question)  # Passing quiz_set_id
 
-        # After processing each URL set, commit the changes
-        db.session.commit()
+        db.session.commit()  # After processing each URL set, commit the changes
 
     # Return a success message
     return jsonify({"message": "Scraping completed.", "quiz_set_id": str(new_quiz_set.id)}), 200

@@ -19,7 +19,6 @@ type AdditionalInfoProps = {
     options: string[];
     answer: string;
   };
-  quizSetId: string;
 };
 
 type CommentType = {
@@ -34,7 +33,6 @@ const AdditionalInfo = ({
   discussion_link,
   question_id,
   questionDetails,
-  quizSetId,
 }: AdditionalInfoProps) => {
   const [loadingRocket, setLoadingRocket] = useState(false);
   const [loadingReload, setLoadingReload] = useState(false);
@@ -89,13 +87,19 @@ const AdditionalInfo = ({
     ));
   };
 
-  const processExplanationForImages = (text: string, quizSetId: string): string => {
-    const explanationImagePattern = /\(image\)q(\d+)_([a-z0-9-]+)_explanation_(\d+)\(image\)/gi;
-    return text.replace(explanationImagePattern, (match, p1, p2, p3) => {
-      let imageName = `q${p1}_${quizSetId}_explanation_${p3}.png`;
-      return `<img src="/assets/images/background/Explanation/${imageName}" alt="${imageName}" style="display: inline-block; max-width: 100%; height: auto;">`;
+  const processExplanationForImages = (text: string, baseUrl: string = "https://www.indiabix.com"): string => {
+    const explanationImagePattern: RegExp = /<img.*?src="(.*?)".*?>/gi;
+    
+    return text.replace(explanationImagePattern, (match: string, imgUrl: string): string => {
+      // Check if the imgUrl is a relative path (i.e., starts with '/')
+      if (imgUrl.startsWith('/')) {
+        // Prepend the base URL if it's a relative path
+        imgUrl = `${baseUrl}${imgUrl}`;
+      }
+  
+      return `<img src="${imgUrl}" alt="Explanation Image" style="display: inline-block; max-width: 100%; height: auto;">`;
     });
-  };
+  };  
 
   const formatBotResponse = (response: string) => {
     let formattedResponse = response;
@@ -228,7 +232,7 @@ const AdditionalInfo = ({
           <AccordionPanel pb={4}>
             <div
               dangerouslySetInnerHTML={{
-                __html: processExplanationForImages(explanation, quizSetId),
+                __html: processExplanationForImages(explanation),
               }}
             />
           </AccordionPanel>

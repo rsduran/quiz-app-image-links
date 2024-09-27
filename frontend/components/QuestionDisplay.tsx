@@ -12,7 +12,6 @@ type QuestionDisplayProps = {
   cardBgColor: string;
   cardTextColor: string;
   unselectedOptionBg: string;
-  quizSetId: string;
 };
 
 const transformMathContent = (content: string): string => {
@@ -26,41 +25,20 @@ const transformMathContent = (content: string): string => {
   return transformedContent;
 };
 
-const processTextForImages = (text: string, quizSetId: string) => {
-  let processedText = text;
+const processTextForImages = (text: string, baseUrl: string = "https://www.indiabix.com"): string => {
+  let processedText: string = text;
 
-  // Pattern for "within" images (Indiabix)
-  const withinPattern = /\(image\)q(\d+)_([a-z0-9-]+)_within_(\d+)\(image\)/gi;
-  processedText = processedText.replace(withinPattern, (match, p1, p2, p3) => {
-    let imageName = `q${p1}_${quizSetId}_within_${p3}.png`;
-    return `<img src="/assets/images/background/Within/${imageName}" alt="${imageName}" style="display: inline-block; width: auto; height: auto;">`;
-  });
-
-  // Pattern for "after" images (Indiabix and Pinoybix)
-  const afterPattern = /\(image\)(q(\d+)_([a-z0-9-]+)_after_(\d+)|pinoybix_q(\d+)_([a-z0-9-]+)_after_1)\(image\)/gi;
-  processedText = processedText.replace(afterPattern, (match, indiabixFull, indiabixQNum, indiabixUUID, indiabixAfterCount, pinoybixQNum, pinoybixUUID) => {
-    let imageName, imagePath;
-    if (indiabixQNum) {
-      imageName = `q${indiabixQNum}_${quizSetId}_after_${indiabixAfterCount}.png`;
-      imagePath = "After";
-    } else if (pinoybixQNum) {
-      imageName = `pinoybix_q${pinoybixQNum}_${quizSetId}_after_1.png`;
-      imagePath = "PinoybixAfter";
+  // Use a generic image pattern to find all img tags in the text
+  const imagePattern: RegExp = /<img.*?src="(.*?)".*?>/gi;
+  processedText = processedText.replace(imagePattern, (match: string, imgUrl: string): string => {
+    // Check if the imgUrl is a relative path (i.e., starts with '/')
+    if (imgUrl.startsWith('/')) {
+      // Prepend the base URL if it's a relative path
+      imgUrl = `${baseUrl}${imgUrl}`;
     }
-    return `<br><img src="/assets/images/background/${imagePath}/${imageName}" alt="${imageName}" style="display: block; margin-left: auto; margin-right: auto; width: auto; height: auto;"><br>`;
-  });
 
-  // Pattern for "Examveda" images
-  const examvedaPattern = /\(image\)examveda_q(\d+)_([a-z0-9-]+)_main\(image\)/gi;
-  processedText = processedText.replace(examvedaPattern, (match, p1, p2) => {
-    let imageName = `examveda_q${p1}_${quizSetId}_main.jpg`;
-    return `<img src="/assets/images/background/ExamvedaMain/${imageName}" alt="${imageName}" style="display: inline-block; width: auto; height: auto;">`;
-  });
-
-  // Corrected pattern for option images
-  const optionPattern = /<img src="\/assets\/images\/background\/Option\/(q\d+_[a-z0-9-]+_option[A-D]_\d+\.png)"/gi;
-  processedText = processedText.replace(optionPattern, (match, imageName) => {
-    return `<img src="/assets/images/background/Option/${imageName}" alt="${imageName}" style="display: inline-block; width: auto; height: auto;">`;
+    // Replace the image tag with the complete image URL
+    return `<img src="${imgUrl}" alt="Image" style="display: inline-block; width: auto; height: auto;">`;
   });
 
   return processedText;
@@ -73,7 +51,6 @@ const QuestionDisplay = ({
   cardBgColor,
   cardTextColor,
   unselectedOptionBg,
-  quizSetId,
 }: QuestionDisplayProps) => {
   const selectedBorderColor = useColorModeValue('blue.500', 'blue.300');
   const unselectedBorderColor = useColorModeValue('gray.200', 'gray.600');
@@ -93,8 +70,7 @@ const QuestionDisplay = ({
   };
 
   const processedQuestion = processTextForImages(
-    transformMathContent(question.question || 'Question'),
-    quizSetId
+    transformMathContent(question.question || 'Question')
   );
 
   return (
@@ -114,7 +90,7 @@ const QuestionDisplay = ({
         const isSelected = selectedOption === optionLabel;
 
         const transformedOption = transformMathContent(option);
-        const processedOption = processTextForImages(transformedOption, quizSetId);
+        const processedOption = processTextForImages(transformedOption);
 
         return (
           <Box
