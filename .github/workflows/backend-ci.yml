@@ -51,4 +51,4 @@ jobs:
       - name: Push changes if there are any
         if: success()
         run: |
-          git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app.git || echo "No changes to push"
+          git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"

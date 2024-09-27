@@ -18,7 +18,7 @@ pipeline {
         stage('Checkout from Git') {
             steps {
                 // Checkout the code from GitHub repository
-                git branch: 'main', credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app.git'
+                git branch: 'main', credentialsId: 'github', url: 'https://github.com/rsduran/quiz-app-image-links.git'
             }
         }
         
@@ -83,7 +83,7 @@ pipeline {
         
         stage('Update Deployment file') {
             environment {
-                GIT_REPO_NAME = "quiz-app"
+                GIT_REPO_NAME = "quiz-app-image-links"
                 GIT_USER_NAME = "rsduran"
             }
             steps {

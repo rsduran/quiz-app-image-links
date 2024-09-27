@@ -2,7 +2,7 @@ terraform {
   backend "s3" {
     bucket         = "athena-quiz-app-bucket"
     region         = "ap-southeast-2"
-    key            = "quiz-app/Jenkins-Server-TF/terraform.tfstate"
+    key            = "quiz-app-image-links/Jenkins-Server-TF/terraform.tfstate"
     dynamodb_table = "Lock-Files"
     encrypt        = true
   }
