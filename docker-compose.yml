@@ -17,19 +17,22 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgresql://my_user:password@db:5432/quizdb  # Reference 'db' service for the PostgreSQL container
+      - FLASK_ENV=production
+      - DB_HOST=db
+      - DB_NAME=quizdb
+      - DB_USER=my_user
+      - DB_PASS=password
 
   db:
     image: postgres:13
     environment:
-      POSTGRES_USER: user
+      POSTGRES_USER: my_user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: quizdb
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Avoid port conflict with local PostgreSQL
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   db-data:
