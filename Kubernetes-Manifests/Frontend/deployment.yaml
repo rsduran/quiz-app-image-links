@@ -20,4 +20,4 @@ spec:
             - containerPort: 3000
           env:
             - name: NEXT_PUBLIC_BACKEND_URL
-              value: "http://k8s-threetie-mainlb-9351bb8505-400949309.ap-southeast-2.elb.amazonaws.com/api"
+              value: "http://k8s-threetie-mainlb-cf4fc9ddea-1985246971.ap-southeast-2.elb.amazonaws.com/api"
