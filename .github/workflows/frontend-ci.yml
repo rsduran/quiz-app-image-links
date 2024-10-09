@@ -51,8 +51,8 @@ jobs:
           git add deployment.yaml
           git diff --quiet && git diff --staged --quiet || git commit -m "Update frontend image to version ${{ github.run_number }}"
 
-      - name: Stash any local changes
-        run: git stash
+      - name: Stash any local changes, including untracked files
+        run: git stash --include-untracked
 
       - name: Pull latest changes
         run: |
