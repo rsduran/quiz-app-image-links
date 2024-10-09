@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Clean workspace
         run: git clean -fdx
@@ -41,17 +43,13 @@ jobs:
           imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
           sed -i "s|rsduran/backend:${imageTag}|rsduran/backend:${{ github.run_number }}|" deployment.yaml
           git add deployment.yaml
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update backend image to version ${{ github.run_number }}"
+          git commit -m "Update backend image to version ${{ github.run_number }}" || echo "No changes to commit"
 
-      - name: Stash changes
-        run: git stash push -u || echo "No changes to stash"
-
-      - name: Pull latest changes
+      - name: Fetch and merge changes
         run: |
-          git pull --rebase origin main || git rebase --abort
-
-      - name: Apply stashed changes
-        run: git stash pop || echo "No stashed changes to apply"
+          git fetch origin main
+          git config pull.rebase false
+          git merge -X ours --no-edit origin/main || echo "Merge failed, continuing with local changes"
 
       - name: Push changes
         if: success()
