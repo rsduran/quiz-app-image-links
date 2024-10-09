@@ -65,7 +65,7 @@ const CalendarEditor = () => {
   }, [date]);
 
   const fetchEditorContent = () => {
-    fetch(`${backendUrl}/getEditorContent`)
+    fetch(`/api/getEditorContent`)
       .then((response) => response.json())
       .then((data) => {
         setEditorContent(data.content);
@@ -79,7 +79,7 @@ const CalendarEditor = () => {
     setEditorContent(content);
     localStorage.setItem('editorContent', content);
 
-    fetch(`${backendUrl}/saveEditorContent`, {
+    fetch(`/api/saveEditorContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
