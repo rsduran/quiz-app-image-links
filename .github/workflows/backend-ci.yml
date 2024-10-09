@@ -38,23 +38,22 @@ jobs:
           cd Kubernetes-Manifests/Backend
           git config user.email "reineirsamonteduran@gmail.com"
           git config user.name "rsduran"
-          # Use grep to find the current image tag and update it
           imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
           sed -i "s|rsduran/backend:${imageTag}|rsduran/backend:${{ github.run_number }}|" deployment.yaml
           git add deployment.yaml
           git diff --quiet && git diff --staged --quiet || git commit -m "Update backend image to version ${{ github.run_number }}"
 
-      - name: Stash any local changes
-        run: git stash
+      - name: Stash changes
+        run: git stash push -u || echo "No changes to stash"
 
       - name: Pull latest changes
         run: |
-          git pull --rebase origin main
+          git pull --rebase origin main || git rebase --abort
 
-      - name: Apply stashed changes (if any)
+      - name: Apply stashed changes
         run: git stash pop || echo "No stashed changes to apply"
 
-      - name: Push changes if there are any
+      - name: Push changes
         if: success()
         run: |
           git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"
