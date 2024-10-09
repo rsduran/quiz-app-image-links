@@ -16,6 +16,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Clean workspace
+        run: git clean -fdx
+
+      - name: Remove .env files
+        run: |
+          find . -name ".env*" -type f -delete
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -24,7 +31,7 @@ jobs:
       - name: Build Docker image
         run: |
           cd frontend
-          docker build -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
+          docker build --no-cache -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
