@@ -15,7 +15,9 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: reinduran/frontend:21
+          image: rsduran/frontend:5
           ports:
             - containerPort: 3000
-          # Removed envFrom since we're not using NEXT_PUBLIC_BACKEND_URL anymore
+          env:
+            - name: NEXT_PUBLIC_BACKEND_URL
+              value: "http://k8s-threetie-mainlb-9351bb8505-400949309.ap-southeast-2.elb.amazonaws.com/api"

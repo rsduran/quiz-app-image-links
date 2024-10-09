@@ -13,25 +13,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Clean workspace
-        run: git clean -fdx
-
-      - name: Remove .env files
-        run: |
-          find . -name ".env*" -type f -delete
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
+      - name: Clean workspace
+        run: git clean -fdx
+
       - name: Build Docker image
+        env:
+          NEXT_PUBLIC_BACKEND_URL: "http://k8s-threetie-mainlb-9351bb8505-400949309.ap-southeast-2.elb.amazonaws.com/api" # Pass the backend URL as an environment variable
         run: |
           cd frontend
-          docker build --no-cache -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
+          docker system prune -f
+          docker container prune -f
+          docker build --build-arg NEXT_PUBLIC_BACKEND_URL=${{ env.NEXT_PUBLIC_BACKEND_URL }} -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
@@ -45,9 +43,25 @@ jobs:
       - name: Update Kubernetes deployment
         run: |
           cd Kubernetes-Manifests/Frontend
-          sed -i "s|reinduran/frontend:.*|reinduran/frontend:${{ github.run_number }}|" deployment.yaml
           git config user.email "reineirsamonteduran@gmail.com"
           git config user.name "rsduran"
+          # Use grep to find the current image tag and update it
+          imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
+          sed -i "s|reinduran/frontend:${imageTag}|reinduran/frontend:${{ github.run_number }}|" deployment.yaml
           git add deployment.yaml
-          git commit -m "Update frontend image to version ${{ github.run_number }}" || echo "No changes to commit"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update frontend image to version ${{ github.run_number }}"
+
+      - name: Stash any local changes, including untracked files
+        run: git stash --include-untracked
+
+      - name: Pull latest changes
+        run: |
+          git pull --rebase origin main
+
+      - name: Apply stashed changes (if any)
+        run: git stash pop || echo "No stashed changes to apply"
+
+      - name: Push changes if there are any
+        if: success()
+        run: |
           git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"

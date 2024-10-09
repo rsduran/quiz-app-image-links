@@ -13,22 +13,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Clean workspace
         run: git clean -fdx
-
-      - name: Remove .env files
-        run: |
-          find . -name ".env*" -type f -delete
 
       - name: Build Docker image
         run: |
           cd backend
           docker system prune -f
           docker container prune -f
-          docker build --no-cache -t reinduran/backend:${{ github.run_number }} -f Dockerfile.backend .
+          docker build -t reinduran/backend:${{ github.run_number }} -f Dockerfile.backend .
 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
@@ -44,18 +38,23 @@ jobs:
           cd Kubernetes-Manifests/Backend
           git config user.email "reineirsamonteduran@gmail.com"
           git config user.name "rsduran"
+          # Use grep to find the current image tag and update it
           imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
           sed -i "s|reinduran/backend:${imageTag}|reinduran/backend:${{ github.run_number }}|" deployment.yaml
           git add deployment.yaml
-          git commit -m "Update backend image to version ${{ github.run_number }}" || echo "No changes to commit"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update backend image to version ${{ github.run_number }}"
 
-      - name: Fetch and merge changes
+      - name: Stash any local changes
+        run: git stash
+
+      - name: Pull latest changes
         run: |
-          git fetch origin main
-          git config pull.rebase false
-          git merge -X ours --no-edit origin/main || echo "Merge failed, continuing with local changes"
+          git pull --rebase origin main
 
-      - name: Push changes
+      - name: Apply stashed changes (if any)
+        run: git stash pop || echo "No stashed changes to apply"
+
+      - name: Push changes if there are any
         if: success()
         run: |
           git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"
