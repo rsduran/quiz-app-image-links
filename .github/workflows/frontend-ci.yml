@@ -21,17 +21,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Clean workspace
-        run: git clean -fdx
-
       - name: Build Docker image
-        env:
-          NEXT_PUBLIC_BACKEND_URL: "http://k8s-threetie-mainlb-cf4fc9ddea-1985246971.ap-southeast-2.elb.amazonaws.com/api"
         run: |
           cd frontend
-          docker system prune -f
-          docker container prune -f
-          docker build --build-arg NEXT_PUBLIC_BACKEND_URL=${{ env.NEXT_PUBLIC_BACKEND_URL }} -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
+          docker build -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
@@ -45,20 +38,9 @@ jobs:
       - name: Update Kubernetes deployment
         run: |
           cd Kubernetes-Manifests/Frontend
+          sed -i "s|reinduran/frontend:.*|reinduran/frontend:${{ github.run_number }}|" deployment.yaml
           git config user.email "reineirsamonteduran@gmail.com"
           git config user.name "rsduran"
-          imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
-          sed -i "s|reinduran/frontend:${imageTag}|reinduran/frontend:${{ github.run_number }}|" deployment.yaml
           git add deployment.yaml
           git commit -m "Update frontend image to version ${{ github.run_number }}" || echo "No changes to commit"
-
-      - name: Fetch and merge changes
-        run: |
-          git fetch origin main
-          git config pull.rebase false
-          git merge -X ours --no-edit origin/main || echo "Merge failed, continuing with local changes"
-
-      - name: Push changes
-        if: success()
-        run: |
           git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"

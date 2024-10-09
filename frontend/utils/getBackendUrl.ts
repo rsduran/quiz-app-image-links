@@ -1,5 +1,3 @@
 export const getBackendUrl = () => {
-  // Use the `NEXT_PUBLIC_BACKEND_URL` from the environment variable if available,
-  // otherwise default to 'http://localhost:5000/api'
-  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000/api';
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://k8s-threetie-mainlb-cf4fc9ddea-1985246971.ap-southeast-2.elb.amazonaws.com/api';
 };
