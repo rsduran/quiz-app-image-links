@@ -45,7 +45,7 @@ const AdditionalInfo = ({
 
   const fetchDiscussionComments = async () => {
     try {
-      const response = await fetch(`/api/getDiscussionComments/${question_id}`);
+      const response = await fetch(`${backendUrl}/getDiscussionComments/${question_id}`);
       const data = await response.json();
       if (data.discussion_comments) {
         const commentPattern = /(.+?)said:(.+ago):(.+)/;
@@ -150,19 +150,19 @@ const AdditionalInfo = ({
     setLoadingRocket(true);
     if (!fetchedExplanation) {
       try {
-        const response = await fetch(`/api/getFurtherExplanation/${question_id}`);
+        const response = await fetch(`${backendUrl}/getFurtherExplanation/${question_id}`);
         const data = await response.json();
         if (data.explanation) {
           setFurtherExplanation(formatBotResponse(data.explanation));
           setFetchedExplanation(true);
         } else {
-          const newResponse = await fetch(`/api/getFurtherExplanation`, {
+          const newResponse = await fetch(`${backendUrl}/getFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(questionDetails),
           });
           const newData = await newResponse.json();
-          await fetch(`/api/saveFurtherExplanation`, {
+          await fetch(`${backendUrl}/saveFurtherExplanation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation }),
@@ -183,13 +183,13 @@ const AdditionalInfo = ({
   const handleReloadClick = async () => {
     setLoadingReload(true);
     try {
-      const newResponse = await fetch(`/api/getFurtherExplanation`, {
+      const newResponse = await fetch(`${backendUrl}/getFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(questionDetails),
       });
       const newData = await newResponse.json();
-      await fetch(`/api/saveFurtherExplanation`, {
+      await fetch(`${backendUrl}/saveFurtherExplanation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question_id: question_id, explanation: newData.further_explanation }),

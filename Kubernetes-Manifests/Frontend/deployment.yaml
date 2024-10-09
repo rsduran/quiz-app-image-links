@@ -15,9 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: reinduran/frontend:16
+          image: reinduran/frontend:17  # Updated image tag
           ports:
             - containerPort: 3000
-          envFrom:
-            - configMapRef:
-                name: frontend-config
+          # Removed envFrom since we're not using NEXT_PUBLIC_BACKEND_URL anymore

@@ -73,7 +73,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
     console.log("Final URLs sent to Backend:", JSON.stringify(urls, null, 2));
   
     try {
-      const response = await fetch(`/api/startScraping`, {
+      const response = await fetch(`${backendUrl}/startScraping`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: quizSetTitle, urls }),
@@ -117,7 +117,7 @@ const ScrapingSection: React.FC<ScrapingSectionProps> = ({ onScrapeComplete, qui
   const downloadQuizPdf = async (quizSetId: string) => {
     try {
       console.log(`Downloading PDF for quiz set ID: ${quizSetId}`); // Corrected string interpolation
-      const response = await fetch(`/api/downloadQuizPdf/${quizSetId}`); // Corrected string interpolation
+      const response = await fetch(`${backendUrl}/downloadQuizPdf/${quizSetId}`); // Corrected string interpolation
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
