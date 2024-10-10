@@ -1,6 +1,7 @@
 # Version control
 .git
 .gitignore
+.gitattributes
 
 # Environments
 .env
@@ -35,9 +36,9 @@ ehthumbs.db
 Thumbs.db
 
 # Frontend specific
-frontend/build/
 frontend/.next/
 frontend/out/
+frontend/build/
 
 # Backend specific
 backend/__pycache__/
@@ -49,5 +50,44 @@ backend/__pycache__/
 Dockerfile*
 docker-compose*
 
+# Next.js
+.next/
+out/
+
+# Production
+build
+
+# Misc
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
 # Documentation
 README.md
+
+# Test files
+**/*.test.js
+**/*.spec.js
+
+# Jenkins
+Jenkins-Pipeline-Code/
+Jenkins-Server-TF/
+
+# Kubernetes
+Kubernetes-Manifests/
+
+# GitHub
+.github/
