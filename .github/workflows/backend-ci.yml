@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
+      - name: Checkout latest main branch
         uses: actions/checkout@v3
         with:
           ref: main
@@ -46,7 +46,12 @@ jobs:
           git add deployment.yaml
           git diff --quiet && git diff --staged --quiet || git commit -m "Update backend image to version ${{ github.run_number }}"
 
+      - name: Pull latest changes from remote
+        run: |
+          git remote set-url origin https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git
+          git pull origin main --rebase
+
       - name: Push changes if there are any
         if: success()
         run: |
-          git push https://rsduran:${{ secrets.GITHUB_TOKEN }}@github.com/rsduran/quiz-app-image-links.git || echo "No changes to push"
+          git push origin main || echo "No changes to push"
