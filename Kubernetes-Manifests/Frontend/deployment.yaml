@@ -21,3 +21,5 @@ spec:
           env:
             - name: NEXT_PUBLIC_BACKEND_URL
               value: "http://k8s-threetie-mainlb-e87ebcda19-792345208.ap-southeast-2.elb.amazonaws.com/api"
+            - name: NEXT_PUBLIC_ENV
+              value: "production"
