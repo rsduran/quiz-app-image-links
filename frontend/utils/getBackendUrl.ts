@@ -6,7 +6,7 @@ export const getBackendUrl = (): string => {
     return process.env.NEXT_PUBLIC_BACKEND_URL;
   } else if (process.env.NEXT_PUBLIC_ENV === 'docker') {
     // Docker Compose environment
-    return 'http://backend:5000/api';
+    return 'http://localhost:5000/api';
   } else if (process.env.NODE_ENV === 'development') {
     // Local development
     return 'http://localhost:5000/api';
