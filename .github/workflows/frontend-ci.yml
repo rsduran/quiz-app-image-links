@@ -30,18 +30,19 @@ jobs:
           NEXT_PUBLIC_BACKEND_URL: "http://k8s-threetie-mainlb-e87ebcda19-792345208.ap-southeast-2.elb.amazonaws.com/api"
         run: |
           cd frontend
-          docker system prune -f
-          docker container prune -f
-          docker build --build-arg NEXT_PUBLIC_BACKEND_URL=${{ env.NEXT_PUBLIC_BACKEND_URL }} -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
+          docker build --build-arg NEXT_PUBLIC_BACKEND_URL=${{ env.NEXT_PUBLIC_BACKEND_URL }} --progress=plain --no-cache -t reinduran/frontend:${{ github.run_number }} -f Dockerfile.frontend .
 
-      - name: Log in to DockerHub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Push Docker image to DockerHub
-        run: docker push reinduran/frontend:${{ github.run_number }}
+      - name: Push Docker image to Docker Hub with retries
+        run: |
+          for i in {1..5}; do
+            docker push reinduran/frontend:${{ github.run_number }} && break || sleep 15;
+          done
 
       - name: Update Kubernetes deployment
         run: |
