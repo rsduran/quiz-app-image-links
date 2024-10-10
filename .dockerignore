@@ -46,10 +46,6 @@ backend/__pycache__/
 # Logs
 *.log
 
-# Docker
-Dockerfile*
-docker-compose*
-
 # Next.js
 .next/
 out/
