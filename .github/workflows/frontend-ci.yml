@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Docker image
         env:
-          NEXT_PUBLIC_BACKEND_URL: "http://k8s-threetie-mainlb-9351bb8505-400949309.ap-southeast-2.elb.amazonaws.com/api"
+          NEXT_PUBLIC_BACKEND_URL: "http://k8s-threetie-mainlb-e87ebcda19-792345208.ap-southeast-2.elb.amazonaws.com/api"
         run: |
           cd frontend
           docker system prune -f
