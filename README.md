@@ -1,7 +1,7 @@
 # Advanced End-to-End DevSecOps Kubernetes Three-Tier Project using AWS EKS, Jenkins, ArgoCD, Prometheus, and Grafana
 
 ## Overview
-This project involves the comprehensive deployment of a three-tier application using advanced DevSecOps practices. It utilizes containerization, static code analysis, vulnerability scanning, and Kubernetes orchestration. The project sets up a robust CI/CD pipeline with Jenkins and ArgoCD, automated infrastructure provisioning using Terraform, and incorporates monitoring and visualization with Prometheus and Grafana.
+This project involves the comprehensive deployment of a three-tier web application using advanced DevSecOps practices. It utilizes containerization, static code analysis, vulnerability scanning, and Kubernetes orchestration. The project sets up a robust CI/CD pipeline with Jenkins and ArgoCD, automated infrastructure provisioning using Terraform, and incorporates monitoring and visualization with Prometheus and Grafana.
 
 ## Tools Used
 - **Docker**: Containerization
