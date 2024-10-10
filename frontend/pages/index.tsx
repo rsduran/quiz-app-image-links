@@ -363,7 +363,7 @@ export default function HomePage() {
                 textDecoration="underline"
                 color={useColorModeValue('black', 'white')}
               >
-                Github
+                GitHub
               </ChakraLink>
               .
             </Text>
