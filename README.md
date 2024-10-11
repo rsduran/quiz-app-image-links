@@ -1,6 +1,6 @@
 # 🎯 Quiz App Image Links
 
-This project is built on top of the [quiz-app](https://github.com/rsduran/quiz-app.git) with some key differences.
+This project is built on top of the [Athena-quiz-app](https://github.com/rsduran/quiz-app.git) with some key differences.
 
 ## 🤔 Why "quiz-app-image-links"?
 
