@@ -1,10 +1,10 @@
 # 🎯 Quiz App Image Links
 
-This project is built on top of the [Athena-quiz-app](https://github.com/rsduran/quiz-app.git) with some key differences.
+This project is built on top of the [Athena quiz app](https://github.com/rsduran/quiz-app.git) with some key differences.
 
 ## 🤔 Why "quiz-app-image-links"?
 
-In the original quiz-app, images were fetched/scraped and downloaded to the `frontend/public/assets` folder. This approach ensured offline accessibility of images.
+In the original Athena quiz app, images were fetched/scraped and downloaded to the `frontend/public/assets` folder. This approach ensured offline accessibility of images.
 
 However, this led to challenges during production deployment on AWS EKS:
 
