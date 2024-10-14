@@ -33,7 +33,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: quizdb
     ports:
-      - "5433:5432"  # Avoid port conflict with local PostgreSQL
+      - "5433:5432"  # avoid port conflict with local postgresql
     volumes:
       - db-data:/var/lib/postgresql/data
 

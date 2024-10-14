@@ -20,16 +20,16 @@ spec:
             - containerPort: 5000
           env:
             - name: DB_HOST
-              value: "postgres"  # Use the service name from the database YAML
+              value: "postgres"
             - name: DB_NAME
               value: "quizdb"
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret  # Matches the secret in the database YAML
+                  name: postgres-secret
                   key: postgres-user
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                  name: postgres-secret  # Matches the secret in the database YAML
+                  name: postgres-secret
                   key: postgres-password
